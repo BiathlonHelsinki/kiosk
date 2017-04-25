@@ -207,3 +207,24 @@ footer {
   margin-top: 15px;
   padding: 0.4rem 2rem;
 }
+
+#screensaver_div {
+  width: 800px;
+  height: 480px;
+  margin: 0;
+  
+}
+
+#screensaver_div .touchmessage {
+  height: 40px;
+  position: absolute;
+  top: 220px;
+  left: 0;
+  color: black;
+  text-align: center;
+  font-size: 1.7rem;
+  padding: 0.2rem 0;
+  width: 800px;
+  background-color: #fded57;
+  font-family: 'Inconsolata', sans-serif;
+}

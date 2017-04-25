@@ -7,7 +7,7 @@ var BrowserWindow = electron.BrowserWindow;
 var mainWindow = null;
 var request = require("request");
 var fs = require('fs');
-var sleep = require('sleep')
+
 var weblock = require('lockfile');
 var globalShortcut = electron.globalShortcut;
 // const Freefare = require('freefare/index');
@@ -20,15 +20,17 @@ var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
 let message = '';
 const SerialPort = require('serialport');
-let serialPort = new SerialPort('/dev/ttyUSB0', {
-        baudrate: 19200
-    });
+// let serialPort = new SerialPort('/dev/ttyUSB0', {
+//         baudrate: 19200
+//     });
 let Printer = require('thermalprinter');
+const screensaver = './app/img/screensaver/';
 
 //  App startup here
 let cardreader =  start_cardreader('initial');
 
 is_api_online();
+
 
 
 function check_lock() {
@@ -68,7 +70,7 @@ function kill_errant_rubies(startafter) {
 function start_cardreader(ooo, callback) {
 
   console.log('spawning ruby')
-  let cardreader = spawn('/Users/fail/.rvm/rubies/ruby-2.3.3/bin/ruby', [ '/Users/fail/src/newkiosk/read_tag.rb']);
+  let cardreader = spawn(config.ruby, [ config.read_tag]);
   cardreader.stdout.on('data', function(data) {
     var res = data.toString().replace(/[\r\n]/g, "").split("---");
     let uid = res[0];
@@ -123,6 +125,18 @@ require('electron-context-menu')({
 function splash_screen() {
   latest = []
   mainWindow.loadURL('file://' + __dirname + '/app/splash.html');
+  let screensaver_files = [];
+  fs.readdir(screensaver, (err, files) => {
+    files.forEach(file => {
+      screensaver_files.push("img/screensaver/" + file);
+      console.log(file);
+    });
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('send-screensaver-files', screensaver_files);
+    });
+  })
+  
+  
 }
  
 function is_api_online() {
@@ -344,7 +358,7 @@ ipcMain.on('ready-to-write', (event, id) =>  {
 
   safe_to_write((check_me) => {
     if (check_me == null) {
-      let cardwriter = spawn('/Users/fail/.rvm/rubies/ruby-2.3.3/bin/ruby', [ '/Users/fail/src/newkiosk/write_tag.rb']);
+      let cardwriter = spawn(config.ruby, [ config.write_tag]);
       cardwriter.stdout.on('data', function(data) {
 
         var res = data.toString().replace(/[\r\n]/g, "").split("---");
@@ -529,7 +543,7 @@ ipcMain.on('open-card-services', function erase_shit(){
   latest = []
   latest.push('file://' + __dirname + '/app/erase_card.html');
   mainWindow.loadURL(latest[0]);
-  let carderaser = spawn('/Users/fail/.rvm/rubies/ruby-2.3.3/bin/ruby', [ '/Users/fail/src/newkiosk/erase_tag.rb']);
+  let carderaser = spawn(config.ruby, [ config.erase_tag]);
   carderaser.stdout.on('data', function(data) {
 
     var res = data.toString().replace(/[\r\n]/g, "").split("---");

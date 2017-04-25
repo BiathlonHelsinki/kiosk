@@ -2,13 +2,24 @@
 <html lang="en">
   <head>
       <meta charset="UTF-8">
-      <title>Temporary kiosk</title>
-      <link href="css/bootstrap.css" rel="stylesheet" type="text/css"/>
+      <title>Temporary screensaver</title>
       <link href="css/index.css" rel="stylesheet" type="text/css"/>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
+      <script src="js/screensaver.js"></script>
+      <style>
+        body {
+          margin: 0 !important;
+        }
+      </style>
   </head>
   <body>
     <a href="index.html">
-      <img src="img/splash_screen.jpg">
+      <div id="screensaver_div">
+        <div class="touchmessage">
+          Welcome to Temporary.
+          Touch screen to start.
+        </div>
+      </div>
     </a>
 
   </body>
