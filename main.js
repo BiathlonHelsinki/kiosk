@@ -324,7 +324,7 @@ function print_paper_ticket(code, event) {
 }
 
 ipcMain.on('reprint', (event, data) => {
-  console.log('trying to reprint ' + data.code + ' for event ' + data.event_name);
+  print_paper_ticket(data.code, data.event_name);
 });
 
 ipcMain.on('print-guest-ticket', (event, data) =>  {
