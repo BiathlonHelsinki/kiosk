@@ -20,11 +20,12 @@ var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
 let message = '';
 const SerialPort = require('serialport');
-// let serialPort = new SerialPort('/dev/ttyUSB0', {
-//         baudrate: 19200
-//     });
+let serialPort = new SerialPort('/dev/ttyUSB0', {
+         baudrate: 19200
+     });
 let Printer = require('thermalprinter');
 const screensaver = './app/img/screensaver/';
+
 
 //  App startup here
 let cardreader =  start_cardreader('initial');
@@ -140,7 +141,6 @@ function splash_screen() {
 }
  
 function is_api_online() {
-
   tcpp.probe(config.api, config.port,  function(err, data) {
     if (data == true) {
       if (latest.slice(-1)[0]  == 'offline') {
@@ -279,14 +279,10 @@ function print_paper_ticket(code, event) {
       var printer = new Printer(serialPort);
       printer.on('ready', function() {
           printer
-            .horizontalLine(16)
-
             .bold(false)
             .inverse(true)
-            .indent(10)
             .printLine('Welcome to Temporary!')
             .inverse(false)
-            .right()
             .printLine('You have attended:')
             .printLine(event)
             .printLine('on')
@@ -304,9 +300,11 @@ function print_paper_ticket(code, event) {
             .horizontalLine(10)
             .print(function() {
               console.log('done');
-              process.exit();
             });
           });
+     printer.on('error', function(err) {
+       console.log('Error: ', err.message);
+     });
   });
 }
 
