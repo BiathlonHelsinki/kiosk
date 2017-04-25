@@ -19,11 +19,11 @@ var latest = [];
 var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
 let message = '';
-const SerialPort = require('serialport');
-let serialPort = new SerialPort('/dev/ttyUSB0', {
-         baudrate: 19200
-     });
-let Printer = require('thermalprinter');
+// const SerialPort = require('serialport');
+// let serialPort = new SerialPort('/dev/ttyUSB0', {
+//          baudrate: 19200
+//      });
+// let Printer = require('thermalprinter');
 const screensaver = './app/img/screensaver/';
 
 
@@ -275,37 +275,52 @@ function safe_to_write(callback) {
 }
 
 function print_paper_ticket(code, event) {
-  serialPort.on('open',function() {
-      var printer = new Printer(serialPort);
-      printer.on('ready', function() {
-          printer
-            .bold(false)
-            .inverse(true)
-            .printLine('Welcome to Temporary!')
-            .inverse(false)
-            .printLine('You have attended:')
-            .printLine(event)
-            .printLine('on')
-            .printLine(new Date().toLocaleString())
-            .printLine('')
-            .printLine('Your entry code is:')
-            .bold(true)
-            .printLine(code)
-            .bold(false)
-            .printLine('')
-            .printLine('Redeem this guest ticket at:')
-            .bold(true)
-            .printLine('www.temporary.fi')
-            .bold(false)
-            .horizontalLine(10)
-            .print(function() {
-              console.log('done');
-            });
-          });
-     printer.on('error', function(err) {
-       console.log('Error: ', err.message);
-     });
+  // make this work later, for now just go shell
+  let printer = spawn("./write_guest_ticket.sh",  [code, event]);
+  var out = fs.createWriteStream("/dev/ttyUSB0");
+  printer.stdout.on('data', function (chunk) {
+    out.write(chunk);
   });
+  // setTimeout(function() {
+  //         console.log("Closing file...");
+  //         fs.close(out, function(err) {
+  //             console.log("File has been closed", err);
+  //             // At this point, Node will just hang
+  //         });
+  //     }, 5000);
+      
+      
+  // serialPort.on('open',function() {
+  //     var printer = new Printer(serialPort);
+  //     printer.on('ready', function() {
+  //         printer
+  //           .bold(false)
+  //           .inverse(true)
+  //           .printLine('Welcome to Temporary!')
+  //           .inverse(false)
+  //           .printLine('You have attended:')
+  //           .printLine(event)
+  //           .printLine('on')
+  //           .printLine(new Date().toLocaleString())
+  //           .printLine('')
+  //           .printLine('Your entry code is:')
+  //           .bold(true)
+  //           .printLine(code)
+  //           .bold(false)
+  //           .printLine('')
+  //           .printLine('Redeem this guest ticket at:')
+  //           .bold(true)
+  //           .printLine('www.temporary.fi')
+  //           .bold(false)
+  //           .horizontalLine(10)
+  //           .print(function() {
+  //             console.log('done');
+  //           });
+  //         });
+  //    printer.on('error', function(err) {
+  //      console.log('Error: ', err.message);
+  //    });
+  // });
 }
 
 ipcMain.on('reprint', (event, data) => {
