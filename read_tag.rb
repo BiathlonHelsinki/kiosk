@@ -1,4 +1,4 @@
-#/Users/fail/.rvm/rubies/ruby-2.3.3/bin/ruby
+require 'highlander'
 
 require_relative './ruby-nfc-1.3/lib/ruby-nfc'
 #require 'ruby-nfc'
