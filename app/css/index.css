@@ -3,14 +3,14 @@
 }
 
 body {
-  margin: -21px 0 0 0;
+  margin: 0 0 0;
   font-family: Inconsolata, monospace;
   background-color: #c9c9c9;
 }
 
 button, input[type=submit] {
-  font-family: Inconsolata, monospace;
-  font-size: 0.9rem;
+  font-family: 'PT Sans', sans-serif;
+  font-size: 1.1rem;
   padding: 0.6rem;
   background-color: #fded57;
 }

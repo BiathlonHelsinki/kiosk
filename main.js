@@ -575,7 +575,7 @@ function link_new_card_screen(message) {
   mainWindow.loadURL(latest[0]);
   if (typeof message  !== 'undefined') {
     mainWindow.webContents.once('did-finish-load', () => {
-
+        kill_errant_rubies();
       mainWindow.webContents.send('present-flash', message);
       message = null;
     });
