@@ -11,7 +11,8 @@ function changeBackground(data){
 
 let index = 1;
 ipcRenderer.once('send-screensaver-files', (event, data) =>  {
-    
+  console.log('data is ' + JSON.stringify(data));
+
     changeBackground(data);
     window.setInterval(function() {
       changeBackground(data)}, 8000);

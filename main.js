@@ -161,6 +161,11 @@ require('electron-context-menu')({
         visible: params.mediaType === 'image'
     }]
 });
+
+ipcMain.on('activate-screensaver', () => {
+
+  splash_screen();
+});
  
 function splash_screen() {
   latest = []
@@ -169,7 +174,7 @@ function splash_screen() {
   fs.readdir(screensaver, (err, files) => {
     files.forEach(file => {
       screensaver_files.push("img/screensaver/" + file);
-      console.log(file);
+
     });
     mainWindow.webContents.once('did-finish-load', () => {
       mainWindow.webContents.send('send-screensaver-files', screensaver_files);
@@ -270,7 +275,7 @@ function query_user(tag_id, security_code, check_card, callback) {
 app.on('ready', function() {
     mainWindow = new BrowserWindow({
         frame: false,
-        kiosk: true,
+        kiosk: false,
         fullscreen: true,
         resizable: false,
         
