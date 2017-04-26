@@ -4,14 +4,16 @@
 
 body {
   margin: 0 0 0;
-  font-family: Inconsolata, monospace;
+  font-family: 'PT Sans', sans-serif;
   background-color: #c9c9c9;
+  font-weight: normal;
 }
 
 button, input[type=submit] {
-  font-family: 'PT Sans', sans-serif;
+  font-family: 'Inconsolata', monospace;
   font-size: 1.1rem;
   padding: 0.6rem;
+  font-weight: bold;
   background-color: #fded57;
 }
 header {

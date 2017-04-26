@@ -68,7 +68,7 @@ function get_reader_status(callback) {
 ipcMain.on('query-reader-status', (event, arg) => {
 
   get_reader_status(function(status) {
-    console.log('reader status is ' + status);
+
     event.sender.send('reader-reply', status);
   });
 });
@@ -141,7 +141,7 @@ function start_cardreader(ooo, callback) {
   });
   cardreader.on('close', function(code) {
 
-      console.log('closing code: ' + code);
+      // console.log('closing code: ' + code);
       //Here you can get the exit code of the script
   });
   cardreader.on('error', function(err) {
@@ -270,10 +270,10 @@ function query_user(tag_id, security_code, check_card, callback) {
 app.on('ready', function() {
     mainWindow = new BrowserWindow({
         frame: false,
-        height: 480,
         kiosk: true,
+        fullscreen: true,
         resizable: false,
-        width: 800
+        
     });
     //  App startup here
     cardreader =  start_cardreader('initial');
