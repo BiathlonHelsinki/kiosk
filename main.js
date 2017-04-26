@@ -26,11 +26,7 @@ let message = '';
 // let Printer = require('thermalprinter');
 const screensaver = './app/img/screensaver/';
 
-
-//  App startup here
-let cardreader =  start_cardreader('initial');
-
-is_api_online();
+let cardreader = null;
 
 
 
@@ -44,9 +40,41 @@ function check_lock() {
   });
 }
 
+function get_reader_status(callback) {
+  
+  ps.lookup({
+      command: 'ruby',
+      arguments: '_tag.rb',
+      }, function(err, resultList ) {
+      if (err) {
+        return err;
+          // throw new Error( err );
+      }
+      else {
+        if (resultList.length == 0) {
+          return callback(false);
+        }
+        resultList.forEach(function( process ){
+            if( process ){
+              return callback(true);
+            } else {
+              return callback(false);
+            }
+          })
+        }
+  });
+}
+
+ipcMain.on('query-reader-status', (event, arg) => {
+
+  get_reader_status(function(status) {
+    console.log('reader status is ' + status);
+    event.sender.send('reader-reply', status);
+  });
+});
 
 function kill_errant_rubies(startafter) {
-
+  
   ps.lookup({
       command: 'ruby',
       arguments: '_tag.rb',
@@ -57,21 +85,29 @@ function kill_errant_rubies(startafter) {
  
       resultList.forEach(function( process ){
           if( process ){
- 
-              ps.kill(process.pid);
+            ps.kill(process.pid);
           }
       });
   });
   if (startafter !== undefined) {
     console.log('restarting cardreader');
+    get_reader_status(function(status) {
+      console.log('reader status is ' + status);
+      mainWindow.webContents.send('reader-reply', status);
+    });
     cardreader = setTimeout(start_cardreader, 3000);
   }
 }
 
 function start_cardreader(ooo, callback) {
-
-  console.log('spawning ruby')
+;
   let cardreader = spawn(config.ruby, [ config.read_tag]);
+  mainWindow.webContents.once('did-finish-load', () => {
+    get_reader_status(function(status) {
+      console.log('reader status is ' + status);
+      mainWindow.webContents.send('reader-reply', status);
+    });
+  });
   cardreader.stdout.on('data', function(data) {
     var res = data.toString().replace(/[\r\n]/g, "").split("---");
     let uid = res[0];
@@ -92,7 +128,7 @@ function start_cardreader(ooo, callback) {
   cardreader.stderr.on('data', function(data) {
       console.log('stderr: ' + data);
       if (/No compatible NFC readers found/.test(data.toString())) {
-    
+        mainWindow.webContents.send('reader-status', 'stopped, restarting');
         if (ooo !== undefined) {
           kill_errant_rubies('startafter');
         } else {
@@ -104,11 +140,14 @@ function start_cardreader(ooo, callback) {
       //Here is where the error output goes
   });
   cardreader.on('close', function(code) {
-      // console.log('closing code: ' + code);
+
+      console.log('closing code: ' + code);
       //Here you can get the exit code of the script
   });
   cardreader.on('error', function(err) {
+    
     console.log('Oh noez, teh errurz: ' + err);
+
   });
 
 }
@@ -235,6 +274,10 @@ app.on('ready', function() {
         resizable: false,
         width: 800
     });
+    //  App startup here
+    cardreader =  start_cardreader('initial');
+
+
 
 
 
@@ -269,7 +312,7 @@ ipcMain.on('search-for-card', (event, arg)=> {
 
 function safe_to_write(callback) {
   return start_cardreader('check_card', (checked) => {
-    console.log('and this callback gets: ' + checked);
+
     return callback(checked);
   });
 }
@@ -509,11 +552,14 @@ ipcMain.on('main-screen', function() {
        clearTimeout(cardreader);
        cardreader = 0;
    }
-
+  
   cardreader = start_cardreader();
   latest = []
   latest.push('file://' + __dirname + '/app/index.html');
   mainWindow.loadURL(latest[0]);
+  mainWindow.webContents.on('did-finish-load', () => {
+    mainWindow.webContents.send('reader-status', JSON.stringify(cardreader));
+  });
 });
 
 

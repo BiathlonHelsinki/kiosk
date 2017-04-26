@@ -3,6 +3,9 @@ let {ipcRenderer} = require('electron');
 var idleTime = 0;
 $(document).ready(function () {
   display_ct();
+
+  check_reader();
+  // 
   if ($('#flash').html() == '') {
     $('#flash').css('display', 'none');
   }
@@ -26,6 +29,26 @@ function timerIncrement() {
     }
 }
 
+function check_reader() {
+
+  ipcRenderer.send('query-reader-status');
+}
+
+setInterval(check_reader, 5000);
+
+ipcRenderer.on('reader-reply', (event, data) => {
+  if (data == true) {
+    $('#reader_status').text('polling...');
+  } else {
+    $('#reader_status').text('not polling.');
+  }
+
+});
+
+ipcRenderer.on('reader-status', (event, data) =>  {
+  $('#reader_status').text(data);
+});
+
 ipcRenderer.once('present-flash', (event, data) =>  {
   console.log('data is ' + data);
   if (data !== null) {
@@ -33,7 +56,7 @@ ipcRenderer.once('present-flash', (event, data) =>  {
     $('#flash').css('display', 'block');
   }
   ipcRenderer.send('present-flash', null);
-  ipcRenderer.removeAllListeners('preset-flash');
+  // ipcRenderer.removeAllListeners('preset-flash');
 });
 
 function display_c(){

@@ -8,6 +8,7 @@ require 'timeout'
 # begin
 # Timeout::timeout(5) {
   @reader.poll(Mifare::Classic::Tag, Mifare::Ultralight::Tag) do |tag|
+
     begin
       case tag
         when Mifare::Classic::Tag

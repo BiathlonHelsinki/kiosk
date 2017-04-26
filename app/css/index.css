@@ -5,7 +5,7 @@
 body {
   margin: -21px 0 0 0;
   font-family: Inconsolata, monospace;
-  background-color: white;
+  background-color: #c9c9c9;
 }
 
 button, input[type=submit] {
@@ -50,7 +50,7 @@ section#flash {
   display: none;
   font-size: 1.2rem;
   padding: 0.4rem 0 0.4rem 2rem;
-  background-color: #c9c9c9;
+  background-color: #FFF;
 }
 
 .search_box_left {
