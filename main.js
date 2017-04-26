@@ -92,7 +92,7 @@ function kill_errant_rubies(startafter) {
   if (startafter !== undefined) {
     console.log('restarting cardreader');
     get_reader_status(function(status) {
-      console.log('reader status is ' + status);
+      // console.log('reader status is ' + status);
       mainWindow.webContents.send('reader-reply', status);
     });
     cardreader = setTimeout(start_cardreader, 3000);
@@ -104,7 +104,7 @@ function start_cardreader(ooo, callback) {
   let cardreader = spawn(config.ruby, [ config.read_tag]);
   mainWindow.webContents.once('did-finish-load', () => {
     get_reader_status(function(status) {
-      console.log('reader status is ' + status);
+      // console.log('reader status is ' + status);
       mainWindow.webContents.send('reader-reply', status);
     });
   });
