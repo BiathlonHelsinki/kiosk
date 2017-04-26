@@ -271,6 +271,7 @@ app.on('ready', function() {
     mainWindow = new BrowserWindow({
         frame: false,
         height: 480,
+        kiosk: true,
         resizable: false,
         width: 800
     });
