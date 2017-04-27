@@ -161,7 +161,7 @@ function start_cardreader(ooo, callback) {
 }
 
 
-
+//
 // require('electron-context-menu')({
 //     prepend: (params, browserWindow) => [{
 //         label: 'Rainbow',

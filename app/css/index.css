@@ -10,6 +10,16 @@ body {
   overflow: hidden;
 }
 
+.button_row {
+  position: absolute;
+  bottom: 150px;
+}
+
+.quit_button {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+}
 button, input[type=submit] {
   font-family: 'Inconsolata', monospace;
   font-size: 1.1rem;
@@ -36,12 +46,16 @@ header .header_text h1 {
   font-family: "Inconsolata", monospace;
 }
 header .header_icons {
-  float: right;
+  float: left;
   padding: 2rem 1rem 0 0;
+  left: 71%;
+  position: absolute;
 }
 
 header .header_icons button {
-  float: right;
+  position: absolute;
+  top: 28px;
+  right: -23px;
 }
 section.container {
   padding: 0 2rem;

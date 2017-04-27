@@ -8,7 +8,8 @@
   "devDependencies": {
     "electron": "1.6.6",
     "electron-packager": "^5.0.1",
-    "electron-rebuild": "^1.5.7"
+    "electron-rebuild": "^1.5.7",
+    "electron-context-menu": "0.8.0"
   },
   "dependencies": {
     "ps-node": "0.1.5",
