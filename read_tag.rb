@@ -1,4 +1,4 @@
-require 'highlander'
+require_relative './highlander/lib/highlander'
 
 require_relative './ruby-nfc-1.3/lib/ruby-nfc'
 #require 'ruby-nfc'

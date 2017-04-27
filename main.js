@@ -1,5 +1,5 @@
 'use strict';
-
+let util = require('util');
 var electron = require('electron');
 var app = electron.app;
 const ps = require('ps-node');
@@ -25,7 +25,15 @@ let message = '';
 //      });
 // let Printer = require('thermalprinter');
 const screensaver = './app/img/screensaver/';
+let log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'w'});
+let log_stdout = process.stdout;
 
+console.log = function(d) { //
+  log_file.write(util.format(d) + '\n');
+  log_stdout.write(util.format(d) + '\n');
+};
+
+process.env.TZ = 'Europe/Helsinki' ;
 let cardreader = null;
 
 

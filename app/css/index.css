@@ -7,6 +7,7 @@ body {
   font-family: 'PT Sans', sans-serif;
   background-color: #c9c9c9;
   font-weight: normal;
+  overflow: hidden;
 }
 
 button, input[type=submit] {
@@ -109,7 +110,7 @@ section.container .left_info {
 
 
 section.container .left_info img, section.container#checked_in .person_info img {
-  max-height: 250px;
+  max-height: 200px;
 }
 
 section.container .right_info {
@@ -214,7 +215,7 @@ footer {
   width: 800px;
   height: 480px;
   margin: 0;
-  
+  overflow: hidden;
 }
 
 #screensaver_div .touchmessage {
