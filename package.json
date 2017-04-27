@@ -8,13 +8,10 @@
   "devDependencies": {
     "electron": "1.6.6",
     "electron-packager": "^5.0.1",
-
-    "electron-rebuild": "^1.5.7",
-    "electron-context-menu": "0.8.0"
+    "electron-rebuild": "^1.5.7"
   },
   "dependencies": {
     "ps-node": "0.1.5",
-    "freefare": "0.1.4",
     "moment": "^2.17.1",
     "request": "^2.79.0",
     "node-yaml-config": "0.0.4",

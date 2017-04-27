@@ -154,13 +154,13 @@ function start_cardreader(ooo, callback) {
 
 
 
-require('electron-context-menu')({
-    prepend: (params, browserWindow) => [{
-        label: 'Rainbow',
-        // only show it when right-clicking images 
-        visible: params.mediaType === 'image'
-    }]
-});
+// require('electron-context-menu')({
+//     prepend: (params, browserWindow) => [{
+//         label: 'Rainbow',
+//         // only show it when right-clicking images
+//         visible: params.mediaType === 'image'
+//     }]
+// });
 
 ipcMain.on('activate-screensaver', () => {
 
