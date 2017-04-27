@@ -36,11 +36,11 @@ ipcRenderer.on('load-events', (event, data) => {
           ).append($('<br />'));
           if (new Date(data[i].attributes["end-at"]) < now)  {
             $('#' + data[i].attributes.slug).addClass('inactive').attr('disabled', 'disabled');
-            $('#' + data[i].attributes.slug + " .title").append($('<div></div>').attr({class: 'inactive'}).text('ended at ' + new Date(data[i].attributes["end-at"]).toLocaleTimeString()));
+            $('#' + data[i].attributes.slug + " .title").append($('<div></div>').attr({class: 'inactive'}).text('ended at ' + new Date(data[i].attributes["end-at"]).toLocaleTimeString().replace(/:\d+$/, ' ')));
             
           } else if (new Date(data[i].attributes["start-at"]) > now)  {
             $('#' + data[i].attributes.slug).addClass('inactive').attr('disabled', 'disabled');
-            $('#' + data[i].attributes.slug + " .title").append($('<div></div>').attr({class: 'inactive'}).text('starts at ' + new Date(data[i].attributes["end-at"]).toLocaleTimeString()));
+            $('#' + data[i].attributes.slug + " .title").append($('<div></div>').attr({class: 'inactive'}).text('starts at ' + new Date(data[i].attributes["start-at"]).toLocaleTimeString().replace(/:\d+$/, ' ')));
             
           }
           //  {
