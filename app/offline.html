@@ -6,6 +6,8 @@
       
       <link href="css/index.css" rel="stylesheet" type="text/css"/>
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
+       <script src="js/offline.js"></script>
+
   </head>
   <body>
     <header>
@@ -15,6 +17,7 @@
         <div>Reader status:
           <span id="reader_status"></span>
         </div>
+
       </div>
     </header>
     <section class="flash" id="flash"></section>
@@ -28,16 +31,17 @@
       <div class="progress-bar">
           <span class="progress-bar-fill" style="width: 0%"></span>
       </div>
+      <div class="quit_button">
+        <button id="quit_kiosk">Quit</button>
+      </div>
     </section>
-  <script src="js/index.js"></script>
-  <script type="text/javascript">
-    
-    $('.progress-bar-fill').delay(10).queue(function () {
-            $(this).css('width', '100%')
-      });
+
+   <script type="text/javascript">
+        $('.progress-bar-fill').delay(10).queue(function () {
+                $(this).css('width', '100%')
+          });
 
         
-  </script>
-  
+      </script>
   </body>
 </html>

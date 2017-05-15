@@ -284,7 +284,7 @@ app.on('ready', function() {
     mainWindow = new BrowserWindow({
         frame: false,
         kiosk: false,
-        fullscreen: true,
+        fullscreen: false,
         resizable: false,
         
     });
