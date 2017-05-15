@@ -510,7 +510,7 @@ ipcMain.on('send-to-blockchain', (event, data) => {
         cardreader = setTimeout(start_cardreader, 5000);
       } else {
 
-        mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: body.error.message} );
+        mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: JSON.stringify(body.error.message)} );
         cardreader = setTimeout(start_cardreader, 5000);
       } 
     });
