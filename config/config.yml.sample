@@ -1,0 +1,7 @@
+default:
+  api: '0.0.0.0'  # enter the IP of your API (or hostname)
+  port: '3002' # enter port of your API
+  name: 'kiosk'   # hardware name as defined in API hardware table
+  token: 'xxxxxxxxxxxx'  # secret token (simple_token_auth)
+  theme: 'temporary'  # load html/css/js from app/themes/whatever
+  missing_icon: 'https://temporary.fi/icons/user_missing.png'  # URL to missing user icon. TODO: move to theme
