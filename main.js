@@ -240,7 +240,7 @@ async function stop_polling() {
 
 ipcMain.on('check-in', (event, data) => {
   latest = []
-  latest.push('file://' + __dirname + '/app/checking_in.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/checking_in.html');
 
   mainWindow.loadURL(latest[0]);
   mainWindow.webContents.once('did-finish-load', () => {
@@ -261,7 +261,7 @@ function get_reader_status() {
 
 function splash_screen() {
   latest.thearray = [];
-  mainWindow.loadURL('file://' + __dirname + '/app/splash.html');
+  mainWindow.loadURL('file://' + __dirname + '/app/themes/' + config.theme + '/splash.html');
   let screensaver_files = [];
   fs.readdir(screensaver, (err, files) => {
     files.forEach(file => {
@@ -307,7 +307,7 @@ function query_user(tag_id, security_code, check_card, callback) {
             console.log('this card belongs to someone already');
             return callback(body.data.attributes.username);
           } else {
-            latest.push('file://' + __dirname + '/app/user.html');
+            latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/user.html');
             mainWindow.loadURL(latest[0]);
 
             mainWindow.webContents.once('did-finish-load', () => {
@@ -323,7 +323,7 @@ function query_user(tag_id, security_code, check_card, callback) {
               console.log('good news, all is safe');
               return callback(null);
             } else {
-              latest.push('file://' + __dirname + '/app/card_not_found.html');
+              latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/card_not_found.html');
               mainWindow.loadURL(latest[0]);
 							is_polling =  false;
               return;
@@ -351,7 +351,7 @@ ipcMain.on('search-for-card', (event, arg)=> {
           link_new_card_screen('Sorry, no matches were found. Please try another search,');
         } else {
           latest = []
-          latest.push('file://' + __dirname + '/app/choose_card.html');
+          latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/choose_card.html');
           mainWindow.loadURL(latest[0]);
           mainWindow.webContents.once('did-finish-load', () => {
 						console.log('device status is ' + JSON.stringify(device));
@@ -364,7 +364,7 @@ ipcMain.on('search-for-card', (event, arg)=> {
 
 ipcMain.on('write-to-id', (event, id) => {
   latest = []
-  latest.push('file://' + __dirname + '/app/writing_new_card.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/writing_new_card.html');
   mainWindow.loadURL(latest[0]);
   let name = '';
   let image_url = '';
@@ -399,7 +399,7 @@ app.on('ready', function() {
 
     });
     //  App startup here
-    latest.ppush('file://' + __dirname + '/app/index.html');
+    latest.ppush('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
     //
     setInterval(function() { biathlon.is_api_online(mainWindow) }, 5000);
     // setInterval(splash_screen, 30000);
@@ -416,7 +416,7 @@ ipcMain.on('link-new-card', function() {
 ipcMain.on('main-screen', async function() {
 
   latest = []
-  latest.push('file://' + __dirname + '/app/index.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
   await mainWindow.loadURL(latest[0]);
   mainWindow.webContents.once('did-finish-load', () => {
   	mainWindow.webContents.send('reader-status', JSON.stringify(device));
@@ -459,7 +459,7 @@ ipcMain.on('ready-to-write', (event, id) =>  {
 					if (!error && response.statusCode === 200) {
 
 						latest = []
-						latest.push('file://' + __dirname + '/app/flash_screen.html');
+						latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
 						mainWindow.loadURL(latest[0]);
 						mainWindow.webContents.once('did-finish-load', () => {
 							message = 'Successfully created card #' + uid;
@@ -471,7 +471,7 @@ ipcMain.on('ready-to-write', (event, id) =>  {
 						});
 					} else if (response.statusCode == 422) {
 						latest = []
-						latest.push('file://' + __dirname + '/app/flash_screen.html');
+						latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
 						mainWindow.loadURL(latest[0]);
 						mainWindow.webContents.once('did-finish-load', () => {
 							message = JSON.parse(body).error.message
@@ -485,7 +485,7 @@ ipcMain.on('ready-to-write', (event, id) =>  {
     } else {
 
       latest = []
-      latest.push('file://' + __dirname + '/app/index.html');
+      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
       mainWindow.loadURL(latest[0]);
       mainWindow.webContents.once('did-finish-load', () => {
         mainWindow.webContents.send('present-flash', 'This card already belongs to ' + check_me);
@@ -526,7 +526,7 @@ ipcMain.on('send-to-blockchain',  function (event, data)  {
 function link_new_card_screen(message) {
 
 	latest = []
-	latest.push('file://' + __dirname + '/app/link_new_card.html');
+	latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/link_new_card.html');
 	mainWindow.loadURL(latest[0]);
 	if (typeof message  !== 'undefined') {
 		mainWindow.webContents.once('did-finish-load', () => {
@@ -547,7 +547,7 @@ ipcMain.on('open-card-services', async function erase_shit(){
 	await stop_polling();
 
   latest = []
-  latest.push('file://' + __dirname + '/app/erase_card.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/erase_card.html');
   mainWindow.loadURL(latest[0]);
 	mainWindow.webContents.once('did-finish-load', async () => {
 		let carderaser = await old_erase_card(device);
@@ -563,7 +563,7 @@ ipcMain.on('open-card-services', async function erase_shit(){
       	headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
       	async function (error, response, body) {
 	        latest = []
-	        latest.push('file://' + __dirname + '/app/flash_screen.html');
+	        latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
 	        mainWindow.loadURL(latest[0]);
 	        if (!error && response.statusCode === 200) {
 	          mainWindow.webContents.once('did-finish-load', () => {

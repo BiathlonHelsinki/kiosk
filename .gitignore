@@ -40,4 +40,4 @@ ruby-nfc-1.3/*
 config/config.yml
 libusb
 .DS_Store
-app/img/screensaver/*
+app/themes/temporary/img/screensaver/*
