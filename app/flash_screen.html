@@ -2,11 +2,12 @@
 <html lang="en">
   <head>
       <meta charset="UTF-8">
-      <title>Search</title>
+      <title>Sound Machine</title>
 
       <link href="css/index.css" rel="stylesheet" type="text/css"/>
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
-    <script src="js/shared.js"></script>
+       <script src="js/flash.js"></script>
+
   </head>
   <body>
     <header>
@@ -21,28 +22,29 @@
         </div>
         <button id="main_menu">&larr;</button>
       </div>
+
     </header>
     <section class="flash" id="flash"></section>
     <section class="container">
-      <h1>Card not found</h1>
-      <h2>This card is not in our database.</h2>
-      <p>Perhaps you would like to link a new card?</p>
-      <p>
-        <button id="link_new_card">Link new card</button>
-      </p>
+
+
+      <p>Returning to the beginning in a few seconds....</p>
+
+      <div class="progress-bar">
+          <span class="progress-bar-fill" style="width: 0%"></span>
+      </div>
+      <div class="quit_button">
+        <button id="quit_kiosk">Quit</button>
+      </div>
     </section>
-    <script type="text/javascript">
 
-      var linkNewCard = document.querySelector('#link_new_card');
+   <script type="text/javascript">
+        $('.progress-bar-fill').delay(10).queue(function () {
+                $(this).css('width', '100%')
+          });
 
-      linkNewCard.addEventListener('click', function() {
 
-        ipcRenderer.send('link-new-card');
-      });
+      </script>
 
-    </script>
-
-    <script src="js/link_card.js"></script>
   </body>
-
 </html>

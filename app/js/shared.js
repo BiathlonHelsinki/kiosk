@@ -5,7 +5,7 @@ $(document).ready(function () {
   display_ct();
 
   check_reader();
-  // 
+  //
   if ($('#flash').html() == '') {
     $('#flash').css('display', 'none');
   }
@@ -25,7 +25,7 @@ function timerIncrement() {
     idleTime = idleTime + 1;
     if (idleTime > 3) { // 20 minutes
       ipcRenderer.send('activate-screensaver');
-      
+
       // window.location.href = 'splash.html';
     }
 }
@@ -35,7 +35,7 @@ function check_reader() {
   ipcRenderer.send('query-reader-status');
 }
 
-setInterval(check_reader, 5000);
+setInterval(check_reader, 400);
 
 ipcRenderer.on('reader-reply', (event, data) => {
   if (data == true) {
@@ -51,7 +51,7 @@ ipcRenderer.on('reader-status', (event, data) =>  {
 });
 
 ipcRenderer.once('present-flash', (event, data) =>  {
-  console.log('data is ' + data);
+
   if (data !== null) {
     $("#flash").html(data);
     $('#flash').css('display', 'block');
