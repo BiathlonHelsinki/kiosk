@@ -1,0 +1,46 @@
+.nmpd-wrapper {display: none;}
+.nmpd-target {cursor: pointer;}
+.nmpd-grid {position:absolute; left:50px; top:50px; z-index:5000; -khtml-user-select: none; padding:10px; width: initial;}
+.nmpd-overlay {z-index:4999;}
+input.nmpd-display {text-align: right; width: 100%;}
+table.nmpd-grid {
+  padding-top: 2rem;
+}
+table.nmpd-grid tr td button {
+  font-size: 3.1rem;
+}
+table.nmpd-grid tr td button.del, table.nmpd-grid tr td button.clear, table.nmpd-grid tr td button.cancel, table.nmpd-grid tr td button.done {
+  font-size: 0.75rem;
+}
+table.nmpd-grid tr td button { 
+  width: 66px;
+  text-align: center;
+}
+.nmpd-wrapper {
+  display: none;
+
+  background-color: grey;
+  width: 100%;
+  height: 480px;
+  position: absolute;
+  z-index: 5;
+}
+
+#enter_pin_wrapper {
+  display: none;
+}
+#enter_pin_hidden {
+  display: none;
+}
+#enter_pin {
+  font-family: 'Source Code Pro', monospace;
+  font-size: 1.1rem;
+  padding: 0.6rem;
+  width: 135px;
+  font-weight: bold;
+  background-color: #EFEFEF;
+  border-width: 2px;
+  border-style: outset;
+  border-color: buttonface;
+  border-image: initial;
+} 

@@ -20,6 +20,7 @@
     "electron-debug": "^1.4.0",
     "fancy-log": "1.3.0",
     "freefare": "0.1.5",
+    "jshint": "^2.9.5",
     "lockfile": "1.0.3",
     "moment": "^2.19.1",
     "node-yaml-config": "0.0.4",

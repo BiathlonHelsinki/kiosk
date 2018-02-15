@@ -17,7 +17,7 @@ var Promise = require("bluebird");
 var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
 let message = '';
-const screensaver = './app/img/screensaver/';
+const screensaver = './app/themes/' + config.theme + '/img/screensaver/';
 let log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 let log_stdout = process.stdout;
 require('electron-debug')({showDevTools: false});
@@ -36,33 +36,51 @@ var is_polling = false;
 // initialise device as soon as app starts
 
 let device = null;
-let node_address = get_node_address();
+let node_address = null;
+let token_address = null;
+
+async function populate_node_address() {
+	let ary = await get_node_address();
+  node_address = ary[0]
+  token_address = ary[1]
+	return ary;
+}
+
+populate_node_address();
 
 initialise_reader();
 
 //  get Node address from API on startup.
 //  Do this every time, in case node contract is upgraded/migrated.
 //  Also, crash out if the API isn't contactable.
-async function get_node_address() {
+function get_node_address() {
 	var url = 'http://' + config.api + ":" + config.port + '/contract_address';
-	return request.get({url: url,
-		json: true,
-		headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
-		(error, response, body) => {
-			if (!error && response.statusCode === 200) {
-				console.log('node address is ' + body.data);
-				return body.data;
-			} else {
-				console.log('Cannot get node address - is API online? Is kiosk online?');
-				process.exit(1);
-			}
+	var out = '';
+	return new Promise(function (resolve, reject) {
+		request.get({url: url,
+			json: true,
+			headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+			(error, response, body) => {
+				if (!error && response.statusCode === 200) {
+					console.log('here');
+					resolve([body.data.contract_address, body.data.token_address]);
+				} else {
+					console.log('Cannot get node address - is API online? Is kiosk online?');
+					process.exit(1);
+					reject(error);
+				}
+		});
 	});
+
+
 }
 async function initialise_reader() {
 	let devices = await freefare.listDevices();
 	await devices[0].open();
 	device = devices[0];
 	console.log('got ' + device.name);
+    console.log('node address is ' + JSON.stringify(node_address))
+  console.log('token address is ' + JSON.stringify(token_address))
 	is_polling = true;
 	await go();
 }
@@ -84,14 +102,40 @@ async function poll_loop(d) {
 	if (a) {
 
 		is_polling = false;
-		var res = a.toString().replace(/[\r\n]/g, "").split("---");
-		let uid = res[0];
-		let security_code = res[1];
-		console.log('uid is ' + a.tag_id + ' and security code is ' + a.security_code);
-		query_user(a.tag_id, a.security_code, '', (checked) => {
-			return checked;
-		});
+
+		if (a.toString().length == 15) {
+			// old card, so
+
+			var res = a.toString().replace(/[\r\n]/g, "").split("---");
+			let uid = res[0];
+			let security_code = res[1];
+			if (!a.user_address) {
+				query_user(a.tag_id, a.security_code, '', (checked) => {
+					return checked;
+				});
+			} else {
+				new_query_user(a, (checked) => {
+					return checked;
+				});
+			}
+		}
+		else {
+			console.log('new card?');
+		}
+
 	}
+}
+
+function byteLength(str) {
+  // returns the byte length of an utf8 string
+  var s = str.length;
+  for (var i=str.length-1; i>=0; i--) {
+    var code = str.charCodeAt(i);
+    if (code > 0x7f && code <= 0x7ff) s++;
+    else if (code > 0x7ff && code <= 0xffff) s+=2;
+    if (code >= 0xDC00 && code <= 0xDFFF) i--; //trail surrogate
+  }
+  return s;
 }
 
 
@@ -99,6 +143,7 @@ async function safe_to_write(callback) {
 	var a = false;
 	is_polling = true;
 	while (!a && is_polling == true) {
+
 	  a = await check_for_card(device);
 		await sleep(400);
 	}
@@ -154,7 +199,7 @@ async function old_erase_card(reader, data) {
 	var keepPolling = true;
 	setTimeout(function () {
     keepPolling = false;
-	}, 10000);
+	}, 10000)
 	while(keepPolling) {
 		let tags = await reader.listTags();
 		if (tags[0]) {
@@ -165,16 +210,56 @@ async function old_erase_card(reader, data) {
 				the_tag.page0 = await tags[0].read(0);
 				the_tag.page1 = await tags[0].read(1);
 				the_tag.page2 = await tags[0].read(2);
+				the_tag.page3 = await tags[0].read(3);
 				the_tag.page4 = await tags[0].read(4);
+
 				let old_security = the_tag.page4.toString('hex');
 				let tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
-				let write_attempt = await tags[0].write(4, new Buffer(hexToBytes('00000000')));
-				console.log('you we got an ultralight here: ' + tag_id + "---" + old_security);
+				for(var i = 4; i < 16; i++) {
+					let write_attempt = await tags[0].write(i, new Buffer(hexToBytes('00000000')));
+				}
+
+
 				return tag_id + "---" + old_security;
 			}
 		} else {
 			console.log('no tag present, try again?');
 			await sleep(300);
+		}
+	}
+}
+
+async function write_card(reader, user_account, security_code) {
+	let tags = await reader.listTags();
+	if (tags[0]) {
+		let tag_type = await tags[0].getType();
+		if (tag_type == 'MIFARE_ULTRALIGHT') {
+			console.log('attempting to write to ultralight')
+			var the_tag = [];
+			let opened = await tags[0].open();
+			let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
+			the_tag = JSON.parse(user_account).eth_address.replace(/^0x/, '').match(/.{1,8}/g);
+			for (let [index, segment] of the_tag.entries()) {
+        console.log('writing ' + segment + ' of length ' + byteLength(segment) + ' to page ' + (index + 10));
+				let write_attempt = await tags[0].write(index + 10, new Buffer(hexToBytes(segment)));
+
+			}
+
+			console.log('na is ' + node_address);
+			the_tag = [];
+			the_tag = node_address.replace(/^0x/, '').match(/.{1,8}/g);
+			for (let [index, segment] of the_tag.entries()) {
+				let write_attempt = await tags[0].write(index + 5, new Buffer(hexToBytes(segment)));
+				console.log('wrote ' + segment + ' to page ' + (index + 5));
+			}
+			// get tag id and return it for API/db
+      let tag_id = {}
+
+      tag_id.page0 = await tags[0].read(0);
+      tag_id.page1 = await tags[0].read(1);
+      tag_id.page2 = await tags[0].read(2);
+      return tag_id.page0.toString('hex') + tag_id.page1.toString('hex') + tag_id.page2.toString('hex').replace(/0000$/, '');
+
 		}
 	}
 }
@@ -210,22 +295,35 @@ async function check_for_card(reader) {
   var tag_id = '';
   var tag_security = '';
   var tagreturn = {};
+  console.log('looking for card...')
   let tags = await reader.listTags();
   if (tags[0]) {
     let opened = await tags[0].open();
-    the_tag.page0 = await tags[0].read(0);
-    the_tag.page1 = await tags[0].read(1);
-    the_tag.page2 = await tags[0].read(2);
-    the_tag.page3 = await tags[0].read(3);
-    the_tag.page4 = await tags[0].read(4);
-    tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
-    tag_security =  the_tag.page4.toString('hex');
-    console.log('tag id: ' + tag_id);
-    console.log('tag security: ' + tag_security);
-    tagreturn.tag_id = tag_id;
-    tagreturn.security_code = tag_security;
-    console.log('returning ' + tagreturn.tag_id);
-    return tagreturn;
+		for (let i = 0; i<16; i++) {
+			try {
+				the_tag["page" + i] = await tags[0].read(i);
+			} catch (error) {
+				console.log('error reading card, go back to beginning');
+			}
+		}
+		tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
+		tag_security = the_tag.page4.toString('hex');
+		console.log('tag id: ' + tag_id);
+		console.log('tag security: ' + tag_security);
+		tagreturn.tag_id = tag_id;
+		tagreturn.security_code = tag_security;
+		if (the_tag.page10.toString('hex') == '00000000')  {
+			// does not have 0x addresses written to card, so either blank or old, so try the old query first
+	    console.log('returning ' + tagreturn.tag_id + ' in old format, should get upgraded');
+
+		} else {		// here there is an ethereum address written to the card, so...
+			tagreturn.node_address =  the_tag.page5.toString('hex') + the_tag.page6.toString('hex') + the_tag.page7.toString('hex') + the_tag.page8.toString('hex') + the_tag.page9.toString('hex');
+			console.log('node address: 0x' + tagreturn.node_address);
+			tagreturn.user_address = the_tag.page10.toString('hex') + the_tag.page11.toString('hex') + the_tag.page12.toString('hex') + the_tag.page13.toString('hex') + the_tag.page14.toString('hex');
+			console.log('user address: 0x' + tagreturn.user_address)
+
+		}
+		return tagreturn;
   }
 }
 
@@ -291,6 +389,39 @@ function events_today(callback) {
   });
 }
 
+function new_query_user(tag, callback) {
+	latest = [];
+
+	var url = 'http://' + config.api + ":" + config.port + '/nfcs/verify_tag';
+	let events = events_today((e) => {
+		request.post({url: url,
+			json: true,
+			form: {securekey: tag.security_code, tag_address: tag.tag_id, user_address: tag.user_address, node_address: tag.node_address},
+			headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+			function (error, response, body) {
+        if (!error && response.statusCode === 200) {
+					latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/user.html');
+					mainWindow.loadURL(latest[0]);
+					console.log('body data is ' + JSON.stringify(body.data));
+					mainWindow.webContents.once('did-finish-load', () => {
+						mainWindow.webContents.send('load-user-info-2', body.data);
+						mainWindow.webContents.send('load-events', e);
+					});
+					return true;
+				}
+				else {
+
+					latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/card_not_found.html');
+					mainWindow.loadURL(latest[0]);
+					is_polling =  false;
+					return;
+				}
+
+		});
+
+	});
+}
+
 function query_user(tag_id, security_code, check_card, callback) {
   latest = []
 
@@ -306,13 +437,15 @@ function query_user(tag_id, security_code, check_card, callback) {
           if (check_card == 'check') {
             console.log('this card belongs to someone already');
             return callback(body.data.attributes.username);
-          } else {
-            latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/user.html');
+          }
+
+					else {
+            latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/upgrading_card.html');
             mainWindow.loadURL(latest[0]);
 
             mainWindow.webContents.once('did-finish-load', () => {
               mainWindow.webContents.send('load-user-info-2', body.data);
-              mainWindow.webContents.send('load-events', e);
+              // mainWindow.webContents.send('load-events', e);
             });
             return true;
 
@@ -362,27 +495,41 @@ ipcMain.on('search-for-card', (event, arg)=> {
   });
 });
 
-ipcMain.on('write-to-id', (event, id) => {
-  latest = []
-  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/writing_new_card.html');
+ipcMain.on('write-to-id', (event, id, pin) => {
+
   mainWindow.loadURL(latest[0]);
   let name = '';
   let image_url = '';
-  var url = "http://" + config.api + ":" + config.port + "/users/" + id + ".json";
-  request.get({url: url,
+  var url = "http://" + config.api + ":" + config.port + "/users/" + id + "/check_pin";
+  request.post({url: url,
     json: true,
+    form: {pin: pin},
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     function(error, response, body) {
       if (!error && response.statusCode === 200) {
+        latest = []
+        latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/writing_new_card.html');
         name = body.username;
         console.log('name is ' + name);
+        mainWindow.loadURL(latest[0]);
         image_url = body.avatar.avatar.small.url;
         if (image_url == '/assets/transparent.gif') {
           image_url = config.missing_icon;
         }
-        mainWindow.webContents.on('did-finish-load', () => {
-          mainWindow.webContents.send('load-user-info', {name: name, image_url: image_url, id: id} );
+        mainWindow.webContents.once('did-finish-load', () => {
+          mainWindow.webContents.send('load-user-info', {name: name, image_url: image_url, id: id, pin: pin} );
         });
+      } else if (response.statusCode === 403) {
+          console.log(body.error)
+          latest = []
+          latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/error.html');
+          mainWindow.loadURL(latest[0]);
+          mainWindow.webContents.once('did-finish-load', () => {
+            mainWindow.webContents.send('load-error', body.error );
+            setTimeout( () =>  {
+               link_new_card_screen(mainWindow)
+            }, 6000)
+          })
       }
     });
 });
@@ -438,61 +585,111 @@ ipcMain.on('activate-screensaver', () => {
   splash_screen();
 });
 
-ipcMain.on('ready-to-write', (event, id) =>  {
-  let url = "http://" + config.api + ":" + config.port + "/users/" + id + "/link_to_nfc";
+ipcMain.on('ready-to-upgrade', async function (event, id)  {
+  let url = "http://" + config.api + ":" + config.port + "/users/" + id + "/get_eth_address";
+  let user_address = await request.get({url: url,
+		// form: {tag_address: uid, securekey: security_code },
+		headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+		async (error, response, body) => {
+			if (!error && response.statusCode === 200) {
+				console.log('bd is ' + body);
+				user_address = body.substr(2);
+				let write_operation = await write_card(device, user_address);
+				latest = []
+				latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+				mainWindow.loadURL(latest[0]);
+				mainWindow.webContents.once('did-finish-load', () => {
+					message = 'Your card has been upgraded to the new format.'
+					mainWindow.webContents.send('present-flash', message);
+					message = null;
+				});
+			} else {
+                console.log(body.error)
+                latest = []
+                latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/error.html');
+                mainWindow.loadURL(latest[0]);
+                mainWindow.webContents.once('did-finish-load', () => {
+                    mainWindow.webContents.send('load-error', body.error );
+					setTimeout( () =>  {
+						link_new_card_screen(mainWindow)
+					}, 6000)
+			    })
+			}
+		})
 
- // no no no - check if card exists BEFORE writing
-
-  safe_to_write(async (check_me) => {
-    if (check_me == null) {
-
-      let cardwriter = await old_write_card(device);
-			var res = cardwriter.toString().replace(/[\r\n]/g, "").split("---");
-			let uid = res[0];
-			let security_code = res[1];
-			console.log("uid is " + uid + ", security key is " + security_code);
-			request.post({url: url,
-				form: {tag_address: uid, securekey: security_code },
-				headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
-				function (error, response, body) {
-
-					if (!error && response.statusCode === 200) {
-
-						latest = []
-						latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
-						mainWindow.loadURL(latest[0]);
-						mainWindow.webContents.once('did-finish-load', () => {
-							message = 'Successfully created card #' + uid;
+})
 
 
-							mainWindow.webContents.send('present-flash', message);
-							// return query_user(uid, security_code);
 
-						});
-					} else if (response.statusCode == 422) {
-						latest = []
-						latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
-						mainWindow.loadURL(latest[0]);
-						mainWindow.webContents.once('did-finish-load', () => {
-							message = JSON.parse(body).error.message
-							mainWindow.webContents.send('present-flash', message);
-							message = null;
-						});
-				} else {
-					console.log('error code is ' + response.statusCode);
-				}
-			});
-    } else {
+ipcMain.on('ready-to-write', async (event, id, pin) =>  {
+  console.log('pin passed is ' + pin)
+  let write_url = "http://" + config.api + ":" + config.port + "/users/" + id + "/link_to_nfc"
+  let read_url = "http://" + config.api + ":" + config.port + "/users/" + id + "/check_pin"
+  let user_address = await request.post({url: read_url,  form: {pin: pin}, headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+      async function (error, response, body) {
+      	if (!error && response.statusCode === 200) {
+	  	    safe_to_write(async (check_me) => {
+            if (check_me == null) {
+              // generate random security code
+              let security_code = Array.from({length: 4}, () => toPaddedHexString(Math.floor(Math.random() * 255 + 1), 2)).join('');
 
-      latest = []
-      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
-      mainWindow.loadURL(latest[0]);
-      mainWindow.webContents.once('did-finish-load', () => {
-        mainWindow.webContents.send('present-flash', 'This card already belongs to ' + check_me);
-      });
-    }
-  });
-});
+              let uid = await write_card(device, body, security_code)
+              console.log("this uid is " + uid + ", security key is " + security_code)
+              request.post({url: write_url,
+                  form: {tag_address: uid, securekey: security_code },
+                  headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+                  function (error, response, body) {
+
+                    if (!error && response.statusCode === 200) {
+
+                      latest = []
+                      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+                      mainWindow.loadURL(latest[0]);
+                      mainWindow.webContents.once('did-finish-load', () => {
+                        message = 'Successfully created card #' + uid;
+                        mainWindow.webContents.send('present-flash', message);
+                        // return query_user(uid, security_code);
+
+                      });
+                    } else if (response.statusCode == 422) {
+                      latest = []
+                      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+                      mainWindow.loadURL(latest[0]);
+                      mainWindow.webContents.once('did-finish-load', () => {
+                        message = JSON.parse(body).error.message
+                        mainWindow.webContents.send('present-flash', message);
+                        message = null;
+                      });
+                    } else {
+                       console.log('error code is ' + response.statusCode);
+                     }
+              })
+			      } else {
+              console.log("check me was not null")
+              latest = []
+              latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/error.html');
+              mainWindow.loadURL(latest[0]);
+              mainWindow.webContents.once('did-finish-load', () => {
+                mainWindow.webContents.send('load-error', body.error );
+                setTimeout( () =>  {
+                  link_new_card_screen(mainWindow)
+               }, 6000)
+              })
+			      }
+          })
+        } else {
+          latest = []
+          latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/error.html');
+          mainWindow.loadURL(latest[0]);
+          mainWindow.webContents.once('did-finish-load', () => {
+            mainWindow.webContents.send('load-error', body.error );
+            setTimeout( () =>  {
+              link_new_card_screen(mainWindow)
+            }, 6000)
+          })
+        }
+      })
+})
 
 ipcMain.on('send-to-blockchain',  function (event, data)  {
   let url = "http://" + config.api + ":" + config.port + "/users/" + data.name + "/instances/" + data.event + "/user_attend";
