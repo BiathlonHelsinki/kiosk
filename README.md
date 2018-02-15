@@ -26,7 +26,17 @@ Copy config/config.yml.sample to config/config.yml and edit as needed.
 ### NFC tag standard
 Version 1.0 of the [Biathlon API](https://github.com/BiathlonHelsinki/biathlon_rails_api) queries its local database for two codes: the tag ID, which is the first 3 pages of the Mifare tag, and the 'security key', which is a randomly generated hash in the fourth page of the tag.
 
-When Biathlon moves to version 2.0, which will actually allow for the deployment of multiple nodes, the standard for our NFC tags will be changed to store Ethereum addresses of both the user account and their home node 'contract'. This information will be updated here ASAP when the kiosk and API are updated.
+Biathlon 2.0 uses the following format for NFC ID (currently only MiFare Ultralight are supported but this can change hen there is a good reason):
+
+
+pages | data | notes
+--- | --- | ---
+0-2 | tag id | *(second half of page 2 is blank)*
+3 | *unused* |
+4 | randomly generated security code |
+5-9 | Ethereum address of the parent Biathlon node | *(without preceding 0x, of course)*
+10-14 | Ethereum address of the user  | *(without preceding 0x, of course)*
+15 | *unused* |
 
 ### Caveat!
 I realise it's confusing but when I refer to 'node' in the sense of Biathlon node, it means a site participating in the Biathlon toolkit, not node.js. Confusing, since this kiosk is built with electron which is built on node.js.

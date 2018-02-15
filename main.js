@@ -312,17 +312,19 @@ async function check_for_card(reader) {
 		console.log('tag security: ' + tag_security);
 		tagreturn.tag_id = tag_id;
 		tagreturn.security_code = tag_security;
-		if (the_tag.page10.toString('hex') == '00000000')  {
-			// does not have 0x addresses written to card, so either blank or old, so try the old query first
-	    console.log('returning ' + tagreturn.tag_id + ' in old format, should get upgraded');
+		if (the_tag.page10 != undefined) {
+      if (the_tag.page10.toString('hex') == '00000000') {
+        // does not have 0x addresses written to card, so either blank or old, so try the old query first
+        console.log('returning ' + tagreturn.tag_id + ' in old format, should get upgraded');
 
-		} else {		// here there is an ethereum address written to the card, so...
-			tagreturn.node_address =  the_tag.page5.toString('hex') + the_tag.page6.toString('hex') + the_tag.page7.toString('hex') + the_tag.page8.toString('hex') + the_tag.page9.toString('hex');
-			console.log('node address: 0x' + tagreturn.node_address);
-			tagreturn.user_address = the_tag.page10.toString('hex') + the_tag.page11.toString('hex') + the_tag.page12.toString('hex') + the_tag.page13.toString('hex') + the_tag.page14.toString('hex');
-			console.log('user address: 0x' + tagreturn.user_address)
+      } else {		// here there is an ethereum address written to the card, so...
+        tagreturn.node_address = the_tag.page5.toString('hex') + the_tag.page6.toString('hex') + the_tag.page7.toString('hex') + the_tag.page8.toString('hex') + the_tag.page9.toString('hex');
+        console.log('node address: 0x' + tagreturn.node_address);
+        tagreturn.user_address = the_tag.page10.toString('hex') + the_tag.page11.toString('hex') + the_tag.page12.toString('hex') + the_tag.page13.toString('hex') + the_tag.page14.toString('hex');
+        console.log('user address: 0x' + tagreturn.user_address)
 
-		}
+      }
+    }
 		return tagreturn;
   }
 }
@@ -402,7 +404,7 @@ function new_query_user(tag, callback) {
         if (!error && response.statusCode === 200) {
 					latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/user.html');
 					mainWindow.loadURL(latest[0]);
-					console.log('body data is ' + JSON.stringify(body.data));
+
 					mainWindow.webContents.once('did-finish-load', () => {
 						mainWindow.webContents.send('load-user-info-2', body.data);
 						mainWindow.webContents.send('load-events', e);
@@ -699,14 +701,14 @@ ipcMain.on('send-to-blockchain',  function (event, data)  {
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     async function(error, response, body) {
       if (!error && response.statusCode === 200) {
-
+        console.log(util.inspect(body.data))
         let image_url = body.data.attributes.avatar.avatar.small.url;
         if (image_url == '/assets/transparent.gif') {
           image_url = config.missing_icon;
         }
         // console.log('what have we got to play with: ' + JSON.stringify(body));
         // mainWindow.webContents.once('did-finish-load', () => {
-          mainWindow.webContents.send('successful-checkin', {name: body.data.attributes.name, image_url: image_url, id: body.data.id, latest_balance: body.data.attributes['latest-balance'], last_attended: body.data.attributes['last-attended'].title, events_attended: body.data.attributes['events-attended']} );
+          mainWindow.webContents.send('successful-checkin', {name: body.data.attributes.name, image_url: image_url, id: body.data.id, latest_balance: body.data.attributes.latest_balance, last_attended: body.data.attributes.last_attended.title, events_attended: body.data.attributes.events_attended} );
 					console.log('setting polling to TRUE');
 					is_polling = true;
 					go();

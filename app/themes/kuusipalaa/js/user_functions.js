@@ -11,10 +11,10 @@ ipcRenderer.on('load-user-info-2', (event, data) => {
   $('#user_id').html(data.id);
   let image = data.avatar.small.url.replace(/development/, 'production');
   if (/transparent\.gif$/.test(image)) {
-    image = 'https://temporary.fi/icons/user_missing.png';
+    image = 'https://kuusipalaa.fi/icons/user_missing.png';
   }
   $("#image_field").attr("src", image);
-  $("#latest_balance").html(data["latest_balance"]);
+  $("#latest_balance").html(data["latest_balance"] + 'ᵽ');
   $("#last_checked_in").html(data["last_attended"].title + ', ' + data["last_attended_at"]);
   ipcRenderer.send('just-linked-card');
 });
@@ -31,8 +31,8 @@ ipcRenderer.on('load-events', (event, data) => {
         $('<img>').attr({src: data[i].attributes.image.image.thumb.url.replace(/development/, 'production')})
         ).append($('<div></div>').attr({class: 'title'}).text(
         data[i].attributes.name))
-        .append($('<div class="so_far"></div').text(data[i].attributes["checked-in-so-far"] + ' checked in today'))
-        .append($('<div class="temps"></div').text(data[i].attributes["cost-bb"] + "Ŧ"))
+        .append($('<div class="so_far"></div').text(data[i].attributes["checked_in_so_far"] + ' checked in today'))
+        .append($('<div class="temps"></div').text(data[i].attributes["cost_bb"] + "ᵽ"))
           ).append($('<br />'));
           if (new Date(data[i].attributes["end-at"]) < now)  {
             $('#' + data[i].attributes.slug).addClass('inactive').attr('disabled', 'disabled');
