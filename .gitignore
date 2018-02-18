@@ -41,3 +41,4 @@ config/config.yml
 libusb
 .DS_Store
 app/themes/temporary/img/screensaver/*
+.idea/*

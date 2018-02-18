@@ -1,8 +1,8 @@
-require_relative './highlander/lib/highlander'
+# require_relative './highlander/lib/highlander'
 
 require_relative './ruby-nfc-1.3/lib/ruby-nfc'
 #require 'ruby-nfc'
-@reader = readers = NFC::Reader.all[0] 
+@reader = readers = NFC::Reader.all[0]
 require 'timeout'
 
 # begin
@@ -26,7 +26,7 @@ require 'timeout'
           @tag = '';
            # tag_id.to_s.gsub(/0000$/, '') +  '---' + tag.read(4).unpack('H*').pop
           (0..15).each do |x|
-            @tag += tag.read(x).unpack('H*').pop 
+            @tag += tag.read(x).unpack('H*').pop
           end
           # p 'reading tag: ' + @tag.to_s
           puts @tag

@@ -196,6 +196,7 @@ function bytesToHex(bytes) {
 }
 
 async function old_erase_card(reader, data) {
+
 	var keepPolling = true;
 	setTimeout(function () {
     keepPolling = false;
@@ -230,72 +231,58 @@ async function old_erase_card(reader, data) {
 }
 
 async function write_card(reader, user_account, security_code) {
-	let tags = await reader.listTags();
-	if (tags[0]) {
-		let tag_type = await tags[0].getType();
-		if (tag_type == 'MIFARE_ULTRALIGHT') {
-			console.log('attempting to write to ultralight')
-			var the_tag = [];
-			let opened = await tags[0].open();
-			let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
-			the_tag = JSON.parse(user_account).eth_address.replace(/^0x/, '').match(/.{1,8}/g);
-			for (let [index, segment] of the_tag.entries()) {
-        console.log('writing ' + segment + ' of length ' + byteLength(segment) + ' to page ' + (index + 10));
-				let write_attempt = await tags[0].write(index + 10, new Buffer(hexToBytes(segment)));
 
-			}
+    let tags = await reader.listTags();
 
-			console.log('na is ' + node_address);
-			the_tag = [];
-			the_tag = node_address.replace(/^0x/, '').match(/.{1,8}/g);
-			for (let [index, segment] of the_tag.entries()) {
-				let write_attempt = await tags[0].write(index + 5, new Buffer(hexToBytes(segment)));
-				console.log('wrote ' + segment + ' to page ' + (index + 5));
-			}
-			// get tag id and return it for API/db
-      let tag_id = {}
+	// if (tags[0]) {
+    let tag_type = await tags[0].getType();
+    // if (tag_type == 'MIFARE_ULTRALIGHT') {
 
-      tag_id.page0 = await tags[0].read(0);
-      tag_id.page1 = await tags[0].read(1);
-      tag_id.page2 = await tags[0].read(2);
-      return tag_id.page0.toString('hex') + tag_id.page1.toString('hex') + tag_id.page2.toString('hex').replace(/0000$/, '');
+      var the_tag = [];
+      let opened = await tags[0].open();
+      return new Promise(async(resolve, reject) => {
+        request.get({
+          url: "http://" + config.api + ":" + config.port + "/users/" + user_account.id + "/get_eth_address",
+          json: true,
+          headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}
+          }, async(error, response, body) => {
+          if(!error && response.statusCode === 200) {
+            let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
+            the_tag = body.address.replace(/^0x/, '').match(/.{1,8}/g);
+            for (let [index, segment] of the_tag.entries()) {
+              console.log('writing ' + segment + ' of length ' + byteLength(segment) + ' to page ' + (index + 10));
+              let write_attempt = await tags[0].write(index + 10, new Buffer(hexToBytes(segment)));
+            }
+            console.log('na is ' + node_address);
+            the_tag = [];
+            the_tag = node_address.replace(/^0x/, '').match(/.{1,8}/g);
+            for (let [index, segment] of the_tag.entries()) {
+              let write_attempt = await tags[0].write(index + 5, new Buffer(hexToBytes(segment)));
+              console.log('wrote ' + segment + ' to page ' + (index + 5));
+            }
+            // get tag id and return it for API/db
+            let tag_id = {}
+            tag_id.page0 = await tags[0].read(0);
+            tag_id.page1 = await tags[0].read(1);
+            tag_id.page2 = await tags[0].read(2);
+            resolve(tag_id.page0.toString('hex') + tag_id.page1.toString('hex') + tag_id.page2.toString('hex').replace(/0000$/, ''))
 
-		}
-	}
+          }
+          else {
+            console.log('did not get eth address to write')
+            reject(false)
+          }
+        })
+      })
 }
 
-async function old_write_card(reader, data) {
-	//  figure out which kind of tag it is
-	let tags = await reader.listTags();
-	if (tags[0]) {
-		let tag_type = await tags[0].getType();
-		if (tag_type == 'MIFARE_ULTRALIGHT') {
-
-			var the_tag = {};
-			let opened = await tags[0].open();
-			the_tag.page0 = await tags[0].read(0);
-			the_tag.page1 = await tags[0].read(1);
-			the_tag.page2 = await tags[0].read(2);
-			// generate security code
-			let security = Array.from({length: 4}, () => toPaddedHexString(Math.floor(Math.random() * 255 + 1), 2)).join('');
-			let tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
-			console.log('would try to write now: ' + tag_id + "---" + security);
-			console.log('ultralight found, attempting to write sec code');
-			let write_attempt = await tags[0].write(4, new Buffer(hexToBytes(security)));
-			return tag_id + "---" + security;
-		} else if (tag_type == 'MIFARE_CLASSIC_1K' || tag_type ==  'MIFARE_CLASSIC_1K') {
-			console.log('classic');
-		}
-	}
-	return Array.from({length:16}, () => Math.floor(Math.random() * 255 + 1));
-}
 
 async function check_for_card(reader) {
   var the_tag = {};
   var tag_id = '';
   var tag_security = '';
   var tagreturn = {};
-  console.log('looking for card...')
+  // console.log('looking for card...')
   let tags = await reader.listTags();
   if (tags[0]) {
     let opened = await tags[0].open();
@@ -330,7 +317,7 @@ async function check_for_card(reader) {
 }
 
 async function stop_polling() {
-	console.log('trying to stop polling on ' + JSON.stringify(device.name));
+	// console.log('trying to stop polling on ' + JSON.stringify(device.name));
 	is_polling = false;
 
 }
@@ -482,8 +469,12 @@ ipcMain.on('search-for-card', (event, arg)=> {
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     async function (error, response, body) {
       if (!error && response.statusCode === 200) {
-        if (body.data.length == 0) {
-          link_new_card_screen('Sorry, no matches were found. Please try another search,');
+
+        if (body.data.length < 1) {
+          mainWindow.loadURL(latest[0]);
+          mainWindow.webContents.once('did-finish-load', () => {
+            mainWindow.webContents.send('get-error', 'Sorry, no matches were found. Please try another search.')
+          })
         } else {
           latest = []
           latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/choose_card.html');
@@ -511,10 +502,10 @@ ipcMain.on('write-to-id', (event, id, pin) => {
       if (!error && response.statusCode === 200) {
         latest = []
         latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/writing_new_card.html');
-        name = body.username;
+        name = body.data.attributes.username;
         console.log('name is ' + name);
         mainWindow.loadURL(latest[0]);
-        image_url = body.avatar.avatar.small.url;
+        image_url = body.data.attributes.avatar.avatar.small.url;
         if (image_url == '/assets/transparent.gif') {
           image_url = config.missing_icon;
         }
@@ -541,10 +532,12 @@ ipcMain.on('write-to-id', (event, id, pin) => {
 
 app.on('ready', function() {
     mainWindow = new BrowserWindow({
-        frame: false,
-        kiosk: false,
-        fullscreen: false,
-        resizable: false,
+      width: 1366,
+      height: 768,
+      frame: false,
+      kiosk: false,
+      fullscreen: false,
+      resizable: false,
 
     });
     //  App startup here
@@ -624,19 +617,25 @@ ipcMain.on('ready-to-upgrade', async function (event, id)  {
 
 
 ipcMain.on('ready-to-write', async (event, id, pin) =>  {
-  console.log('pin passed is ' + pin)
+
   let write_url = "http://" + config.api + ":" + config.port + "/users/" + id + "/link_to_nfc"
   let read_url = "http://" + config.api + ":" + config.port + "/users/" + id + "/check_pin"
-  let user_address = await request.post({url: read_url,  form: {pin: pin}, headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+  request.post({url: read_url, json: true, form: {pin: pin}, headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
       async function (error, response, body) {
       	if (!error && response.statusCode === 200) {
+          // if response.body.eth_account is blank, we have to create a new one
+
 	  	    safe_to_write(async (check_me) => {
             if (check_me == null) {
               // generate random security code
               let security_code = Array.from({length: 4}, () => toPaddedHexString(Math.floor(Math.random() * 255 + 1), 2)).join('');
 
-              let uid = await write_card(device, body, security_code)
-              console.log("this uid is " + uid + ", security key is " + security_code)
+
+              let uid = await write_card(device, body.data, security_code)
+
+              console.log(" SHOULD NOT HAPPEN UNTIL AFTER WRITE :: this uid is "  + util.inspect(uid) + ", security key is " + security_code)
+
+
               request.post({url: write_url,
                   form: {tag_address: uid, securekey: security_code },
                   headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
@@ -727,15 +726,15 @@ function link_new_card_screen(message) {
 	latest = []
 	latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/link_new_card.html');
 	mainWindow.loadURL(latest[0]);
-	if (typeof message  !== 'undefined') {
-		mainWindow.webContents.once('did-finish-load', () => {
-
-			mainWindow.webContents.send('present-flash', message);
-			message = null;
-		});
-	} else {
-
-	}
+	// if (typeof message  !== 'undefined') {
+	// 	mainWindow.webContents.once('did-finish-load', () => {
+  //
+	// 		mainWindow.webContents.send('present-flash', message);
+	// 		message = null;
+	// 	});
+	// } else {
+  //
+	// }
 	console.log('exiting link_new_card_screen');
 	return;
 }
@@ -757,7 +756,7 @@ ipcMain.on('open-card-services', async function erase_shit(){
 	    let security_code = res[1];
 	    let url = "http://" + config.api + ":" + config.port + "/nfcs/" + uid + "/erase_tag"
 	    console.log("uid is " + uid + ", security key is " + security_code);
-    	request.get({url: url,
+    	request.post({url: url,
       	form: {tag_address: uid, securekey: security_code },
       	headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
       	async function (error, response, body) {

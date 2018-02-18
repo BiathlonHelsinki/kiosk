@@ -1,5 +1,5 @@
 {
-  "name": "temporary_kiosk2",
+  "name": "biathlon_kiosk2",
   "version": "2.0.0",
   "main": "./main.js",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "devtron": "^1.4.0",
-    "electron": "1.8.1",
+    "electron": "1.8.2",
     "electron-context-menu": "0.9.1",
     "electron-packager": "^5.0.1",
     "electron-rebuild": "^1.6.0"
@@ -31,5 +31,9 @@
     "thermalprinter": "0.3.8"
   },
   "author": "John W Fail",
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/BiathlonHelsinki/kiosk.git"
+  }
 }
