@@ -1,4 +1,6 @@
-$('input').mlKeyboard({layout: 'fi_FI'});
+if ($('input').length) {
+  $('input').mlKeyboard({layout: 'fi_FI'});
+}
 
 let mainMenu = document.querySelector('#main_menu');
 

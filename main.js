@@ -246,8 +246,11 @@ async function write_card(reader, user_account, security_code) {
           json: true,
           headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}
           }, async(error, response, body) => {
+            console.log('body of ' + "http://" + config.api + ":" + config.port + "/users/" + user_account.id + "/get_eth_address :" + util.inspect(body))
           if(!error && response.statusCode === 200) {
-            let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
+            if (security_code != 'skip') {
+              let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
+            }
             the_tag = body.address.replace(/^0x/, '').match(/.{1,8}/g);
             for (let [index, segment] of the_tag.entries()) {
               console.log('writing ' + segment + ' of length ' + byteLength(segment) + ' to page ' + (index + 10));
@@ -269,7 +272,8 @@ async function write_card(reader, user_account, security_code) {
 
           }
           else {
-            console.log('did not get eth address to write')
+
+            console.log('did not get eth address to write: ' + util.inspect(error))
             reject(false)
           }
         })
@@ -433,7 +437,7 @@ function query_user(tag_id, security_code, check_card, callback) {
             mainWindow.loadURL(latest[0]);
 
             mainWindow.webContents.once('did-finish-load', () => {
-              mainWindow.webContents.send('load-user-info-2', body.data);
+              mainWindow.webContents.send('load-user-info-2', body);
               // mainWindow.webContents.send('load-events', e);
             });
             return true;
@@ -587,9 +591,10 @@ ipcMain.on('ready-to-upgrade', async function (event, id)  {
 		headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
 		async (error, response, body) => {
 			if (!error && response.statusCode === 200) {
-				console.log('bd is ' + body);
-				user_address = body.substr(2);
-				let write_operation = await write_card(device, user_address);
+
+				let a = { }
+        a['id']= id
+				let write_operation = await write_card(device, a, 'skip');
 				latest = []
 				latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
 				mainWindow.loadURL(latest[0]);

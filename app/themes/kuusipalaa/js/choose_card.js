@@ -48,9 +48,9 @@ require('electron').ipcRenderer.on('load-matches', (event, data) => {
         badge.innerHTML = id + ' / ' + name + ' / ' + data[key].attributes.email;
         badge.setAttribute('value', id);
 
-        if (data[key].attributes['has_pin'] == false) {
-          badge.setAttribute('disabled', 'disabled')
-        }
+        // if (data[key].attributes['has_pin'] == false) {
+        //   badge.setAttribute('disabled', 'disabled')
+        // }
         document.getElementById('results').appendChild(badge);
       }
     }
