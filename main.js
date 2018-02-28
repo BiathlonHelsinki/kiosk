@@ -75,14 +75,19 @@ function get_node_address() {
 
 }
 async function initialise_reader() {
-	let devices = await freefare.listDevices();
-	await devices[0].open();
-	device = devices[0];
-	console.log('got ' + device.name);
-    console.log('node address is ' + JSON.stringify(node_address))
-  console.log('token address is ' + JSON.stringify(token_address))
-	is_polling = true;
-	await go();
+  try {
+  	let devices = await freefare.listDevices();
+  	await devices[0].open();
+  	device = devices[0];
+  	console.log('got ' + device.name);
+      console.log('node address is ' + JSON.stringify(node_address))
+    console.log('token address is ' + JSON.stringify(token_address))
+  	is_polling = true;
+  	await go();
+  } catch (e) {
+    console.log('got an error: ' + util.inspect(e))
+    initialise_reader()
+  }
 }
 async function go() {
 	console.log('entering go(), is_polling is ' + is_polling);
@@ -353,16 +358,16 @@ function get_reader_status() {
 function splash_screen() {
   latest.thearray = [];
   mainWindow.loadURL('file://' + __dirname + '/app/themes/' + config.theme + '/splash.html');
-  let screensaver_files = [];
-  fs.readdir(screensaver, (err, files) => {
-    files.forEach(file => {
-      screensaver_files.push("img/screensaver/" + file);
+  // let screensaver_files = [];
+  // fs.readdir(screensaver, (err, files) => {
+  //   files.forEach(file => {
+  //     screensaver_files.push("img/screensaver/" + file);
 
-    });
-    mainWindow.webContents.on('did-finish-load', () => {
-      mainWindow.webContents.send('send-screensaver-files', screensaver_files);
-    });
-  })
+  //   });
+    // mainWindow.webContents.on('did-finish-load', () => {
+    //   mainWindow.webContents.send('send-screensaver', screensaver_files);
+    // });
+  // })
 
 
 }
@@ -531,7 +536,7 @@ ipcMain.on('write-to-id', (event, id, pin) => {
     });
 });
 
-
+app.disableHardwareAcceleration()
 
 
 app.on('ready', function() {
