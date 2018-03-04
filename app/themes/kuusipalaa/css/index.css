@@ -169,7 +169,7 @@ section.container .right_info #events button.inactive, ssection.container .guest
 }
 
  {
-    
+
 }
 
 section.container .right_info #events button img, section.container .guests#events button img {
@@ -211,7 +211,7 @@ section.container#checked_in, section.container#printed_ok {
 section.container#printed_ok .person_info button {
   margin: 1rem;
   font-size: 2.9rem;
-} 
+}
 section.container#checked_in .person_info {
   float: left;
   widh: 48%;
@@ -234,9 +234,10 @@ footer {
 }
 
 #screensaver_div {
-  width: 800px;
-  height: 480px;
+  width: 1366px;
+  height: 768px;
   margin: 0;
+  background-color: black;
   overflow: hidden;
 }
 

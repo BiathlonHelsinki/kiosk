@@ -23,7 +23,7 @@ $(document).ready(function () {
 
 function timerIncrement() {
     idleTime = idleTime + 1;
-    if (idleTime > 1) { // 20 minutes
+    if (idleTime > 3) { // 20 minutes
       ipcRenderer.send('activate-screensaver');
 
       // window.location.href = 'splash.html';

@@ -10,7 +10,9 @@ module.exports = {
       if (data == true) {
         if (latest.thearray.slice(-1)[0]  == 'offline') {
           latest.thearray.pop();
-          mainWindow.loadURL(latest[0]);
+          if (latest[0] != undefined) {
+            mainWindow.loadURL(latest[0]);
+          }
         }
       } else {
         if (latest.thearray.slice(-1)[0]  != 'offline') {

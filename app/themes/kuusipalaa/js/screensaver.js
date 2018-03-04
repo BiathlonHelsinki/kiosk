@@ -16,5 +16,9 @@ ipcRenderer.once('send-screensaver-files', (event, data) =>  {
     changeBackground(data);
     window.setInterval(function() {
       changeBackground(data)}, 8000);
- 
+
 });
+
+$('#return').on('click', () => {
+  ipcRenderer.send('main-screen')
+})

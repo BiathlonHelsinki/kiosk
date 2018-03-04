@@ -86,7 +86,7 @@ async function initialise_reader() {
   	await go();
   } catch (e) {
     console.log('got an error: ' + util.inspect(e))
-    initialise_reader()
+    // initialise_reader()
   }
 }
 async function go() {
@@ -345,6 +345,11 @@ ipcMain.on('check-in', (event, data) => {
 
 });
 
+ipcMain.on('back-from-screensaver', () => {
+  console.log('should start polling here')
+  is_polling = true;
+  go();
+})
 
 ipcMain.on('query-reader-status', (event, arg) => {
 	event.sender.send('reader-reply', get_reader_status());
