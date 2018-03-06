@@ -39,7 +39,7 @@ header .logo {
 
 header .header_text {
   float: left;
-  padding: 10px 0 0 15px;
+  padding: 20px 0 0 25px;
 }
 header .header_text h1 {
   padding-top: 5px;
@@ -61,7 +61,7 @@ header .header_icons button {
   right: -23px;
 }
 section.container {
-  padding: 0 2rem;
+  padding-left: 40px;
   width: 100%;
   float: left;
 }

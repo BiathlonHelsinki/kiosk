@@ -10,6 +10,12 @@ mainMenu2.addEventListener('click', function() {
   ipcRenderer.send('main-screen');
 });
 
+let mainMenu3 = document.querySelector('#main_menu3');
+
+mainMenu3.addEventListener('click', function() {
+  ipcRenderer.send('main-screen');
+});
+
 ipcRenderer.once('load-checkin-info', (event, data) => {
 
   $('#user_name').text(data.name);
@@ -22,7 +28,7 @@ ipcRenderer.once('send-errors', (event, data) => {
   $('#checking_in').css('display', 'none');
   $('#error_message').text(data.error_message);
   $('#errors').css('display', 'block');
-  
+
 
   // ipcRenderer.send('send-to-blockchain', {name: data.name, event: data.event});
 });
