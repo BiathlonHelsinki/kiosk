@@ -39,7 +39,7 @@ header .logo {
 
 header .header_text {
   float: left;
-  padding: 0;
+  padding: 10px 0 0 15px;
 }
 header .header_text h1 {
   padding-top: 5px;
