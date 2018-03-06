@@ -19,11 +19,11 @@ var latest = [];
 var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
 let message = '';
-// const SerialPort = require('serialport');
-// let serialPort = new SerialPort('/dev/ttyUSB0', {
-//          baudrate: 19200
-//      });
-// let Printer = require('thermalprinter');
+const SerialPort = require('serialport');
+let serialPort = new SerialPort('/dev/ttyUSB1', {
+         baudrate: 9600
+     });
+let Printer = require('thermalprinter');
 const screensaver = './app/img/screensaver/';
 let log_file = fs.createWriteStream(__dirname + '/debug.log', {flags : 'w'});
 let log_stdout = process.stdout;
@@ -64,7 +64,7 @@ function get_reader_status(callback) {
       .catch(error => {
       	console.log(error);
       });
-  
+
 }
 
 ipcMain.on('query-reader-status', (event, arg) => {
@@ -76,7 +76,7 @@ ipcMain.on('query-reader-status', (event, arg) => {
 });
 
 function kill_errant_rubies(startafter) {
-  
+
   ps.lookup({
       command: 'ruby',
       arguments: '_tag.rb',
@@ -84,7 +84,7 @@ function kill_errant_rubies(startafter) {
       if (err) {
           throw new Error( err );
       }
- 
+
       resultList.forEach(function( process ){
           if( process ){
             ps.kill(process.pid);
@@ -125,7 +125,7 @@ function start_cardreader(ooo, callback) {
       //   return callback(status);
       // });
     }
-      
+
   });
   cardreader.stderr.on('data', function(data) {
       console.log('stderr: ' + data);
@@ -147,7 +147,7 @@ function start_cardreader(ooo, callback) {
       //Here you can get the exit code of the script
   });
   cardreader.on('error', function(err) {
-    
+
     console.log('Oh noez, teh errurz: ' + err);
 
   });
@@ -168,7 +168,7 @@ ipcMain.on('activate-screensaver', () => {
 
   splash_screen();
 });
- 
+
 function splash_screen() {
   latest = []
   mainWindow.loadURL('file://' + __dirname + '/app/splash.html');
@@ -182,10 +182,10 @@ function splash_screen() {
       mainWindow.webContents.send('send-screensaver-files', screensaver_files);
     });
   })
-  
-  
+
+
 }
- 
+
 function is_api_online() {
   tcpp.probe(config.api, config.port,  function(err, data) {
     if (data == true) {
@@ -204,8 +204,8 @@ function is_api_online() {
 
 function events_today(callback) {
   var url = 'http://' + config.api + ":" + config.port + '/events/today';
-  
-  return request.get({url: url, 
+
+  return request.get({url: url,
     json: true,
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     (error, response, body) => {
@@ -228,20 +228,20 @@ function query_user(tag_id, security_code, check_card, callback) {
 
   var url = 'http://' + config.api + ":" + config.port + '/nfcs/' + tag_id + '/user_from_tag';
   let events = events_today((e) => {
-    request.get({url: url, 
+    request.get({url: url,
       json: true,
       qs: {securekey: security_code },
       headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
       function (error, response, body) {
         if (!error && response.statusCode === 200) {
-          
+
           if (check_card == 'check') {
             console.log('this card belongs to someone already');
             return callback(body.data.attributes.username);
           } else {
             latest.push('file://' + __dirname + '/app/user.html');
             mainWindow.loadURL(latest[0]);
-        
+
             mainWindow.webContents.once('did-finish-load', () => {
               mainWindow.webContents.send('load-user-info-2', body.data);
               mainWindow.webContents.send('load-events', e);
@@ -263,11 +263,11 @@ function query_user(tag_id, security_code, check_card, callback) {
             console.log("Got an error: ", error, ", status code: ", response.statusCode);
             return false;
           }
-        }   
+        }
 
       });
     });
-    
+
 }
 
 
@@ -278,7 +278,7 @@ app.on('ready', function() {
         kiosk: false,
         fullscreen: false,
         resizable: false,
-        
+
     });
     //  App startup here
     cardreader =  start_cardreader('initial');
@@ -292,7 +292,7 @@ app.on('ready', function() {
 ipcMain.on('search-for-card', (event, arg)=> {
   kill_errant_rubies();
   var url = "http://" + config.api + ":" + config.port + "/nfcs/unattached_users";
-  request.get({url: url, 
+  request.get({url: url,
     json: true,
     qs: {q: arg },
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
@@ -322,50 +322,50 @@ function safe_to_write(callback) {
 function print_paper_ticket(code, event) {
   // make this work later, for now just go shell
   let printer = spawn("./write_guest_ticket.sh",  [code, event]);
-  var out = fs.createWriteStream("/dev/ttyUSB0");
+  var out = fs.createWriteStream("/dev/ttyUSB1");
   printer.stdout.on('data', function (chunk) {
     out.write(chunk);
   });
-  // setTimeout(function() {
-  //         console.log("Closing file...");
-  //         fs.close(out, function(err) {
-  //             console.log("File has been closed", err);
-  //             // At this point, Node will just hang
-  //         });
-  //     }, 5000);
-      
-      
-  // serialPort.on('open',function() {
-  //     var printer = new Printer(serialPort);
-  //     printer.on('ready', function() {
-  //         printer
-  //           .bold(false)
-  //           .inverse(true)
-  //           .printLine('Welcome to Temporary!')
-  //           .inverse(false)
-  //           .printLine('You have attended:')
-  //           .printLine(event)
-  //           .printLine('on')
-  //           .printLine(new Date().toLocaleString())
-  //           .printLine('')
-  //           .printLine('Your entry code is:')
-  //           .bold(true)
-  //           .printLine(code)
-  //           .bold(false)
-  //           .printLine('')
-  //           .printLine('Redeem this guest ticket at:')
-  //           .bold(true)
-  //           .printLine('www.temporary.fi')
-  //           .bold(false)
-  //           .horizontalLine(10)
-  //           .print(function() {
-  //             console.log('done');
-  //           });
-  //         });
-  //    printer.on('error', function(err) {
-  //      console.log('Error: ', err.message);
-  //    });
-  // });
+  setTimeout(function() {
+          console.log("Closing file...");
+          fs.close(out, function(err) {
+              console.log("File has been closed", err);
+              // At this point, Node will just hang
+          });
+      }, 5000);
+
+
+  serialPort.on('open',function() {
+      var printer = new Printer(serialPort);
+      printer.on('ready', function() {
+          printer
+            .bold(false)
+            .inverse(true)
+            .printLine('Welcome to Kuusi Palaa!')
+            .inverse(false)
+            .printLine('You have attended:')
+            .printLine(event)
+            .printLine('on')
+            .printLine(new Date().toLocaleString())
+            .printLine('')
+            .printLine('Your entry code is:')
+            .bold(true)
+            .printLine(code)
+            .bold(false)
+            .printLine('')
+            .printLine('Redeem this guest ticket at:')
+            .bold(true)
+            .printLine('www.kuusipalaa.fi')
+            .bold(false)
+            .horizontalLine(10)
+            .print(function() {
+              console.log('done');
+            });
+          });
+     printer.on('error', function(err) {
+       console.log('Error: ', err.message);
+     });
+  });
 }
 
 ipcMain.on('reprint', (event, data) => {
@@ -378,13 +378,13 @@ ipcMain.on('print-guest-ticket', (event, data) =>  {
   mainWindow.loadURL(latest[0]);
   let url = "http://" + config.api + ":" + config.port + "/instances/" + data.event + "/onetimer";
   // console.log('getting url ' + url);
-  request.get({url: url, 
+  request.get({url: url,
     json: true,
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     function(error, response, body) {
       if (!error && response.statusCode === 200) {
         print_paper_ticket(body.data.attributes.code, data.event_name);
-        
+
         mainWindow.webContents.once('did-finish-load', () => {
           mainWindow.webContents.send('tried-to-print', {code: body.data.attributes.code, event_name: data.event_name});
         });
@@ -392,8 +392,8 @@ ipcMain.on('print-guest-ticket', (event, data) =>  {
 
         mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: body.error.message} );
 
-      } 
-    });  
+      }
+    });
 });
 
 ipcMain.on('open-guest-ticket-screen', () => {
@@ -411,7 +411,7 @@ ipcMain.on('ready-to-write', (event, id) =>  {
   kill_errant_rubies();
   let url = "http://" + config.api + ":" + config.port + "/users/" + id + "/link_to_nfc";
   console.log('spawning ruby to write');
-  
+
  // no no no - check if card exists BEFORE writing
 
   safe_to_write((check_me) => {
@@ -435,11 +435,11 @@ ipcMain.on('ready-to-write', (event, id) =>  {
               mainWindow.loadURL(latest[0]);
               mainWindow.webContents.once('did-finish-load', () => {
                 message = 'Successfully created card #' + uid;
-                
-                
+
+
                 mainWindow.webContents.send('present-flash', message);
                 return query_user(uid, security_code);
-           
+
               });
             } else if (response.statusCode == 422) {
               latest = []
@@ -482,7 +482,7 @@ ipcMain.on('send-to-blockchain', (event, data) => {
   kill_errant_rubies();
   let url = "http://" + config.api + ":" + config.port + "/users/" + data.name + "/instances/" + data.event + "/user_attend";
   // console.log('getting url ' + url);
-  request.get({url: url, 
+  request.get({url: url,
     json: true,
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     function(error, response, body) {
@@ -500,7 +500,7 @@ ipcMain.on('send-to-blockchain', (event, data) => {
 
         mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: JSON.stringify(body.error.message)} );
         cardreader = setTimeout(start_cardreader, 5000);
-      } 
+      }
     });
 });
 
@@ -525,7 +525,7 @@ ipcMain.on('write-to-id', (event, id) => {
   let name = '';
   let image_url = '';
   var url = "http://" + config.api + ":" + config.port + "/users/" + id + ".json";
-  request.get({url: url, 
+  request.get({url: url,
     json: true,
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     function(error, response, body) {
@@ -539,12 +539,12 @@ ipcMain.on('write-to-id', (event, id) => {
         mainWindow.webContents.on('did-finish-load', () => {
 
           mainWindow.webContents.send('load-user-info', {name: name, image_url: image_url, id: id} );
-          
+
         });
-      } 
+      }
     });
-  
-  
+
+
 
 });
 
@@ -554,7 +554,7 @@ ipcMain.on('main-screen', function() {
        clearTimeout(cardreader);
        cardreader = 0;
    }
-  
+
   cardreader = start_cardreader();
   latest = []
   latest.push('file://' + __dirname + '/app/index.html');
@@ -584,7 +584,7 @@ function link_new_card_screen(message) {
   } else {
 
   }
-  
+
 }
 
 
@@ -593,7 +593,7 @@ ipcMain.on('link-new-card', function() {
 });
 
 
-ipcMain.on('open-card-services', function erase_shit(){ 
+ipcMain.on('open-card-services', function erase_shit(){
   kill_errant_rubies();
   if (cardreader) {
     clearTimeout(cardreader);
@@ -612,7 +612,7 @@ ipcMain.on('open-card-services', function erase_shit(){
     let security_code = res[1];
     let url = "http://" + config.api + ":" + config.port + "/nfcs/" + uid + "/erase_tag"
     console.log("uid is " + uid + ", security key is " + security_code);
-    request.get({url: url, 
+    request.get({url: url,
       form: {tag_address: uid, securekey: security_code },
       headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
       function (error, response, body) {
@@ -622,15 +622,15 @@ ipcMain.on('open-card-services', function erase_shit(){
         if (!error && response.statusCode === 200) {
           mainWindow.webContents.once('did-finish-load', () => {
             message = 'Card ' + uid + ' has been successfully erased.';
-            mainWindow.webContents.send('present-flash', message);     
+            mainWindow.webContents.send('present-flash', message);
             message = null;
           });
         } else if (response.statusCode === 401) {
           mainWindow.webContents.once('did-finish-load', () => {
             message = 'This card was already blank, or at least not in our database.';
-            mainWindow.webContents.send('present-flash', message);     
+            mainWindow.webContents.send('present-flash', message);
             message = null;
-            
+
           });
         }
         setTimeout(start_cardreader, 2500);
@@ -650,8 +650,8 @@ ipcMain.on('open-card-services', function erase_shit(){
   carderaser.on('error', function(err) {
     console.log('Oh noez, teh errurz: ' + err);
   });
-  
-  
+
+
 });
 
 

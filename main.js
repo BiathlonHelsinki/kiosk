@@ -12,7 +12,11 @@ var weblock = require('lockfile');
 var globalShortcut = electron.globalShortcut;
 var yaml_config = require('node-yaml-config');
 var config = yaml_config.load('./config/config.yml');
-
+const SerialPort = require('serialport');
+let serialPort = new SerialPort('/dev/ttyUSB1', {
+         baudrate: 9600
+     });
+let Printer = require('thermalprinter');
 var Promise = require("bluebird");
 var ipcMain = electron.ipcMain;
 const spawn = require('child_process').spawn;
@@ -797,4 +801,92 @@ ipcMain.on('open-card-services', async function erase_shit(){
 			console.log('error');
 		}
 	});
+});
+
+function print_paper_ticket(code, event) {
+  // make this work later, for now just go shell
+  let printer = spawn("./write_guest_ticket.sh",  [code, event]);
+  var out = fs.createWriteStream("/dev/ttyUSB1");
+  printer.stdout.on('data', function (chunk) {
+    out.write(chunk);
+  });
+  setTimeout(function() {
+          console.log("Closing file...");
+          fs.close(out, function(err) {
+              console.log("File has been closed", err);
+              // At this point, Node will just hang
+          });
+      }, 5000);
+
+
+  serialPort.on('open',function() {
+      var printer = new Printer(serialPort);
+      printer.on('ready', function() {
+          printer
+            .bold(false)
+            .inverse(true)
+            .printLine('Welcome to Kuusi Palaa!')
+            .inverse(false)
+            .printLine('You have attended:')
+            .printLine(event)
+            .printLine('on')
+            .printLine(new Date().toLocaleString())
+            .printLine('')
+            .printLine('Your entry code is:')
+            .bold(true)
+            .printLine(code)
+            .bold(false)
+            .printLine('')
+            .printLine('Redeem this guest ticket at:')
+            .bold(true)
+            .printLine('www.kuusipalaa.fi')
+            .bold(false)
+            .horizontalLine(10)
+            .print(function() {
+              console.log('done');
+            });
+          });
+     printer.on('error', function(err) {
+       console.log('Error: ', err.message);
+     });
+  });
+}
+
+ipcMain.on('reprint', (event, data) => {
+  print_paper_ticket(data.code, data.event_name);
+});
+
+ipcMain.on('print-guest-ticket', (event, data) =>  {
+  latest = []
+  latest.push('file://' + __dirname + '/app/printing_ticket.html');
+  mainWindow.loadURL(latest[0]);
+  let url = "http://" + config.api + ":" + config.port + "/instances/" + data.event + "/onetimer";
+  // console.log('getting url ' + url);
+  request.get({url: url,
+    json: true,
+    headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+    function(error, response, body) {
+      if (!error && response.statusCode === 200) {
+        print_paper_ticket(body.data.attributes.code, data.event_name);
+
+        mainWindow.webContents.once('did-finish-load', () => {
+          mainWindow.webContents.send('tried-to-print', {code: body.data.attributes.code, event_name: data.event_name});
+        });
+      } else {
+
+        mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: body.error.message} );
+
+      }
+    });
+});
+
+ipcMain.on('open-guest-ticket-screen', () => {
+  latest = []
+  latest.push('file://' + __dirname + '/app/guest_ticket.html');
+  mainWindow.loadURL(latest[0]);
+  let events = events_today((e) => {
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('load-events', e);
+    });
+  });
 });
