@@ -867,6 +867,7 @@ ipcMain.on('print-guest-ticket', (event, data) =>  {
     headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
     function(error, response, body) {
       if (!error && response.statusCode === 200) {
+        console.log('body is ' + util.inspect(body))
         print_paper_ticket(body.data.attributes.code, data.event_name);
 
         mainWindow.webContents.once('did-finish-load', () => {
