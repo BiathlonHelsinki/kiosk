@@ -13,7 +13,7 @@ var globalShortcut = electron.globalShortcut;
 var yaml_config = require('node-yaml-config');
 var config = yaml_config.load('./config/config.yml');
 const SerialPort = require('serialport');
-let serialPort = new SerialPort('/dev/ttyUSB1', {
+let serialPort = new SerialPort('/dev/thermalprinter', {
          baudrate: 9600
      });
 let Printer = require('thermalprinter');
@@ -806,7 +806,7 @@ ipcMain.on('open-card-services', async function erase_shit(){
 function print_paper_ticket(code, event) {
   // make this work later, for now just go shell
   let printer = spawn("./write_guest_ticket.sh",  [code, event]);
-  var out = fs.createWriteStream("/dev/ttyUSB1");
+  var out = fs.createWriteStream("/dev/thermalprinter");
   printer.stdout.on('data', function (chunk) {
     out.write(chunk);
   });
