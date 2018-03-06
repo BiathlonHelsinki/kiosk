@@ -858,7 +858,7 @@ ipcMain.on('reprint', (event, data) => {
 
 ipcMain.on('print-guest-ticket', (event, data) =>  {
   latest = []
-  latest.push('file://' + __dirname + '/app/themes/' + config.theme + 'printing_ticket.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/printing_ticket.html');
   mainWindow.loadURL(latest[0]);
   let url = "http://" + config.api + ":" + config.port + "/instances/" + data.event + "/onetimer";
   // console.log('getting url ' + url);
@@ -882,7 +882,7 @@ ipcMain.on('print-guest-ticket', (event, data) =>  {
 
 ipcMain.on('open-guest-ticket-screen', () => {
   latest = []
-  latest.push('file://' + __dirname + '/app/themes/' + config.theme + 'guest_ticket.html');
+  latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/guest_ticket.html');
   mainWindow.loadURL(latest[0]);
   let events = events_today((e) => {
     mainWindow.webContents.once('did-finish-load', () => {
