@@ -22,7 +22,7 @@
     "freefare": "0.1.5",
     "jshint": "^2.9.5",
     "lockfile": "1.0.3",
-    "moment": "^2.19.1",
+    "moment": "^2.21.0",
     "node-yaml-config": "0.0.4",
     "ps-node": "0.1.5",
     "request": "^2.83.0",
