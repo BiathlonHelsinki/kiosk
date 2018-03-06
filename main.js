@@ -810,13 +810,13 @@ function print_paper_ticket(code, event) {
   printer.stdout.on('data', function (chunk) {
     out.write(chunk);
   });
-  setTimeout(function() {
-          console.log("Closing file...");
-          fs.close(out, function(err) {
-              console.log("File has been closed", err);
-              // At this point, Node will just hang
-          });
-      }, 5000);
+  // setTimeout(function() {
+  //         console.log("Closing file...");
+  //         fs.close(out, function(err) {
+  //             console.log("File has been closed", err);
+  //             // At this point, Node will just hang
+  //         });
+  //     }, 5000);
 
 
   serialPort.on('open',function() {
