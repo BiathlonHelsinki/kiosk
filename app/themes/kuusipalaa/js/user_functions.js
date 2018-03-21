@@ -9,13 +9,17 @@ ipcRenderer.on('load-user-info-2', (event, data) => {
   console.log('data is ' + data);
   $("#person_field").html(data.username);
   $('#user_id').html(data.id);
-  let image = data.avatar.small.url.replace(/development/, 'production');
+  let image = data.attributes.avatar.avatar.small.url.replace(/development/, 'production');
   if (/transparent\.gif$/.test(image)) {
     image = 'https://kuusipalaa.fi/icons/user_missing.png';
   }
+
   $("#image_field").attr("src", image);
-  $("#latest_balance").html(data["latest_balance"] + 'ᵽ');
-  $("#last_checked_in").html(data["last_attended"].title + ', ' + data["last_attended_at"]);
+  $("#latest_balance").html(data.attributes["latest_balance"] + 'ᵽ');
+  $("#last_checked_in").html(data.attributes["last_attended"].title + ', ' + data.attributes["last_attended_at"]);
+  if (data.attributes['is_stakeholder?'] == true) {
+    $('#stakeholder').css('display', 'block')
+  }
   ipcRenderer.send('just-linked-card');
 });
 
@@ -28,7 +32,7 @@ ipcRenderer.on('load-events', (event, data) => {
     $('#events').append($('<button></button>').
       prop('id', data[i].attributes.slug).
       html(
-        $('<img>').attr({src: data[i].attributes.image.image.thumb.url.replace(/development/, 'production')})
+        $('<img>').attr({src: data[i].attributes.image.image.thumb.url.replace(/development/, 'production').replace(/\/assets\/transparent\.gif/, 'img/kplogo.gif')})
         ).append($('<div></div>').attr({class: 'title'}).text(
         data[i].attributes.name))
         .append($('<div class="so_far"></div').text(data[i].attributes["checked_in_so_far"] + ' checked in today'))

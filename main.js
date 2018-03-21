@@ -8,14 +8,12 @@ const {app, BrowserWindow} = require('electron');
 var mainWindow = null;
 var request = require("request");
 var fs = require('fs');
-var weblock = require('lockfile');
+let nfclock = require('lockfile');
 var globalShortcut = electron.globalShortcut;
 var yaml_config = require('node-yaml-config');
 var config = yaml_config.load('./config/config.yml');
 const SerialPort = require('serialport');
-let serialPort = new SerialPort('/dev/thermalprinter', {
-         baudrate: 9600
-     });
+let serialPort
 let Printer = require('thermalprinter');
 var Promise = require("bluebird");
 var ipcMain = electron.ipcMain;
@@ -29,10 +27,10 @@ const Freefare = require('freefare/index');
 let freefare = new Freefare();
 
 
-var biathlon = require('./biathlon');
+const biathlon = require('./biathlon');
 
 
-var latest = require('./latest.js');
+let latest = require('./latest.js');
 let reader_status = false;
 var global_device_ready = false;
 var is_polling = false;
@@ -43,6 +41,16 @@ let device = null;
 let node_address = null;
 let token_address = null;
 
+function connect_printer() {
+  try {
+    serialPort = new SerialPort('/dev/thermalprinter', {
+         baudrate: 9600
+    });
+  } catch(err) {
+    console.log('serialport error: ')
+  }
+}
+
 async function populate_node_address() {
 	let ary = await get_node_address();
   node_address = ary[0]
@@ -50,9 +58,11 @@ async function populate_node_address() {
 	return ary;
 }
 
-populate_node_address();
 
-initialise_reader();
+unlock()
+//connect_printer()
+populate_node_address()
+
 
 //  get Node address from API on startup.
 //  Do this every time, in case node contract is upgraded/migrated.
@@ -66,11 +76,19 @@ function get_node_address() {
 			headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
 			(error, response, body) => {
 				if (!error && response.statusCode === 200) {
-					console.log('here');
+          initialise_reader()
 					resolve([body.data.contract_address, body.data.token_address]);
 				} else {
+
+          stop_polling()
 					console.log('Cannot get node address - is API online? Is kiosk online?');
-					process.exit(1);
+
+					mainWindow.loadURL('file://' + __dirname + '/app/themes/' + config.theme + '/kiosk_offline.html');
+
+          mainWindow.webContents.once('did-finish-load', () => {
+
+          });
+          return true;
 					reject(error);
 				}
 		});
@@ -86,31 +104,40 @@ async function initialise_reader() {
   	console.log('got ' + device.name);
       console.log('node address is ' + JSON.stringify(node_address))
     console.log('token address is ' + JSON.stringify(token_address))
-  	is_polling = true;
+  	is_polling = 1;
   	await go();
   } catch (e) {
     console.log('got an error: ' + util.inspect(e))
-    // initialise_reader()
+    initialise_reader()
   }
 }
 async function go() {
-	console.log('entering go(), is_polling is ' + is_polling);
-	if (is_polling) {
-		poll_loop(device);
-	}
+
+	if (is_polling > 0) {
+    // console.log('entering poll_loop(), is_polling is ' + is_polling);
+    poll_loop(device);
+
+	} else {
+    // console.log('not polling, is_polling is ' + is_polling);
+  }
 }
 
 async function poll_loop(d) {
 	var a;
 
-	while (!a && is_polling == true) {
-	  a = await check_for_card(d);
-		await sleep(400);
-	}
+	while (!a && is_polling > 0) {
+        is_polling += 1
+        // console.log('is_polling is ' + is_polling)
+        a = await check_for_card(d);
+    		await sleep(200);
+
+  }
 
 	if (a) {
+    latest.thearray = [];
+    mainWindow.loadURL('file://' + __dirname + '/app/themes/' + config.theme + '/card_read.html');
 
-		is_polling = false;
+		is_polling = 0;
 
 		if (a.toString().length == 15) {
 			// old card, so
@@ -135,6 +162,53 @@ async function poll_loop(d) {
 	}
 }
 
+
+async function check_for_card(reader) {
+  var the_tag = {};
+  var tag_id = '';
+  var tag_security = '';
+  var tagreturn = {};
+  // console.log('looking for card...')
+  let tags = await reader.listTags();
+  if (tags[0]) {
+    let opened = await tags[0].open();
+    for (let i = 0; i<16; i++) {
+      try {
+        the_tag["page" + i] = await tags[0].read(i);
+      } catch (error) {
+        console.log('error reading card, go back to beginning');
+      }
+    }
+    tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
+    tag_security = the_tag.page4.toString('hex');
+    console.log('tag id: ' + tag_id);
+    console.log('tag security: ' + tag_security);
+    tagreturn.tag_id = tag_id;
+    tagreturn.security_code = tag_security;
+    if (the_tag.page10 != undefined) {
+      if (the_tag.page10.toString('hex') == '00000000') {
+        // does not have 0x addresses written to card, so either blank or old, so try the old query first
+        console.log('returning ' + tagreturn.tag_id + ' in old format, should get upgraded');
+
+      } else {    // here there is an ethereum address written to the card, so...
+        tagreturn.node_address = the_tag.page5.toString('hex') + the_tag.page6.toString('hex') + the_tag.page7.toString('hex') + the_tag.page8.toString('hex') + the_tag.page9.toString('hex');
+        console.log('node address: 0x' + tagreturn.node_address);
+        tagreturn.user_address = the_tag.page10.toString('hex') + the_tag.page11.toString('hex') + the_tag.page12.toString('hex') + the_tag.page13.toString('hex') + the_tag.page14.toString('hex');
+        console.log('user address: 0x' + tagreturn.user_address)
+
+      }
+    }
+    return tagreturn;
+  }
+}
+
+
+async function unlock() {
+  console.log('removing lockfile if it exists')
+  await nfclock.unlock('nfclock.lock')
+}
+
+
 function byteLength(str) {
   // returns the byte length of an utf8 string
   var s = str.length;
@@ -152,7 +226,7 @@ async function safe_to_write(callback) {
 	var a = false;
 	is_polling = true;
 	while (!a && is_polling == true) {
-
+    nfclock.lock('cardreader.lock')
 	  a = await check_for_card(device);
 		await sleep(400);
 	}
@@ -290,50 +364,6 @@ async function write_card(reader, user_account, security_code) {
 }
 
 
-async function check_for_card(reader) {
-  var the_tag = {};
-  var tag_id = '';
-  var tag_security = '';
-  var tagreturn = {};
-  // console.log('looking for card...')
-  let tags = await reader.listTags();
-  if (tags[0]) {
-    let opened = await tags[0].open();
-		for (let i = 0; i<16; i++) {
-			try {
-				the_tag["page" + i] = await tags[0].read(i);
-			} catch (error) {
-				console.log('error reading card, go back to beginning');
-			}
-		}
-		tag_id = the_tag.page0.toString('hex') + the_tag.page1.toString('hex') + the_tag.page2.toString('hex').replace(/0000$/, '');
-		tag_security = the_tag.page4.toString('hex');
-		console.log('tag id: ' + tag_id);
-		console.log('tag security: ' + tag_security);
-		tagreturn.tag_id = tag_id;
-		tagreturn.security_code = tag_security;
-		if (the_tag.page10 != undefined) {
-      if (the_tag.page10.toString('hex') == '00000000') {
-        // does not have 0x addresses written to card, so either blank or old, so try the old query first
-        console.log('returning ' + tagreturn.tag_id + ' in old format, should get upgraded');
-
-      } else {		// here there is an ethereum address written to the card, so...
-        tagreturn.node_address = the_tag.page5.toString('hex') + the_tag.page6.toString('hex') + the_tag.page7.toString('hex') + the_tag.page8.toString('hex') + the_tag.page9.toString('hex');
-        console.log('node address: 0x' + tagreturn.node_address);
-        tagreturn.user_address = the_tag.page10.toString('hex') + the_tag.page11.toString('hex') + the_tag.page12.toString('hex') + the_tag.page13.toString('hex') + the_tag.page14.toString('hex');
-        console.log('user address: 0x' + tagreturn.user_address)
-
-      }
-    }
-		return tagreturn;
-  }
-}
-
-async function stop_polling() {
-	// console.log('trying to stop polling on ' + JSON.stringify(device.name));
-	is_polling = false;
-
-}
 
 
 
@@ -549,6 +579,7 @@ app.disableHardwareAcceleration()
 
 
 app.on('ready', function() {
+
     mainWindow = new BrowserWindow({
       width: 1366,
       height: 768,
@@ -560,7 +591,7 @@ app.on('ready', function() {
     });
     //  App startup here
     latest.ppush('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
-    //
+
     setInterval(function() { biathlon.is_api_online(mainWindow) }, 5000);
     // setInterval(splash_screen, 30000);
     mainWindow.loadURL(latest.thearray[0]);
@@ -574,14 +605,13 @@ ipcMain.on('link-new-card', function() {
 
 
 ipcMain.on('main-screen', async function() {
-
   latest = []
   latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
   await mainWindow.loadURL(latest[0]);
   mainWindow.webContents.once('did-finish-load', () => {
   	mainWindow.webContents.send('reader-status', JSON.stringify(device));
 
-		is_polling = true;
+		is_polling = 1;
 		go();
   });
 
@@ -594,7 +624,7 @@ ipcMain.on('close-main-window', function () {
 
 
 ipcMain.on('activate-screensaver', () => {
-
+  is_polling = 0
   splash_screen();
 });
 
@@ -727,15 +757,15 @@ ipcMain.on('send-to-blockchain',  function (event, data)  {
         // console.log('what have we got to play with: ' + JSON.stringify(body));
         // mainWindow.webContents.once('did-finish-load', () => {
           mainWindow.webContents.send('successful-checkin', {name: body.data.attributes.name, image_url: image_url, id: body.data.id, latest_balance: body.data.attributes.latest_balance, last_attended: body.data.attributes.last_attended.title, events_attended: body.data.attributes.events_attended} );
-					console.log('setting polling to TRUE');
-					is_polling = true;
-					go();
+					// console.log('setting polling to 1');
+					is_polling = 1;
+					// go();
       } else {
 
         mainWindow.webContents.send('send-errors', {code: response.statusCode, error_message: JSON.stringify(body.error.message)} );
-				console.log('setting polling to TRUE in send-to-blockchain errors');
-				is_polling = true;
-				go();
+				// console.log('setting polling to 1 in send-to-blockchain errors');
+				is_polling = 1;
+				// go();
       }
     });
 });
@@ -881,6 +911,12 @@ ipcMain.on('print-guest-ticket', (event, data) =>  {
     });
 });
 
+async function stop_polling() {
+  // console.log('trying to stop polling on ' + JSON.stringify(device.name));
+  is_polling = false;
+
+  }
+
 ipcMain.on('open-guest-ticket-screen', () => {
   latest = []
   latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/guest_ticket.html');
@@ -891,3 +927,8 @@ ipcMain.on('open-guest-ticket-screen', () => {
     });
   });
 });
+
+module.exports = {
+ stop_polling : stop_polling,
+ go: go
+}

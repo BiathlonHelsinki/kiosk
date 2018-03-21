@@ -5,7 +5,7 @@ var Latest = module.exports = {
     },
     ppop: function() {
       Latest.thearray.pop();
-    }, 
+    },
     sslice: function(x) {
       Latest.thearray.slice(x);
     }

@@ -153,7 +153,8 @@ section.container .right_info #events button, section.container .guests#events b
   padding: 0.1rem;
   margin-bottom: 1rem;
   width: 350px;
-  font-family: 'PT Sans', serif;
+  height: 150px;
+  font-family: 'Source Code Pro', sans-serif;
   font-size: 1.14rem;
   font-weight: bold;
 }
@@ -173,11 +174,14 @@ section.container .right_info #events button.inactive, ssection.container .guest
 }
 
 section.container .right_info #events button img, section.container .guests#events button img {
-  height: 60px;
+  height: 80px;
   float: left;
+  padding-left: 95px;
+
 }
 section.container .right_info #events button .title, section.container .guests#events button .title {
   padding: 0.4rem 0 1rem 0;
+  clear: left;
 }
 section.container .right_info #events button .title .inactive, section.container .guests#events button .title .inactive {
   font-weight: normal;
@@ -188,6 +192,9 @@ section.container .right_info #events button .title .inactive, section.container
 
 section.container .right_info #events button .temps, section.container .guests#events button .temps {
   float: right;
+  bottom: 7px;
+  right: 5px;
+  position: relative;
 }
 section.container .right_info #events button .so_far, section.container .guests#events button .so_far {
   float: left;
@@ -253,4 +260,11 @@ footer {
   width: 800px;
   background-color: #fded57;
   font-family: 'Source Code Pro', sans-serif;
+}
+
+#stakeholder {
+  font-size: 3rem;
+  font-family: 'Source Code Pro', sans-serif;
+  font-weight: bold;
+  display: none;
 }

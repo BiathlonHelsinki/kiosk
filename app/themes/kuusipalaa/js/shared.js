@@ -10,8 +10,8 @@ $(document).ready(function () {
     $('#flash').css('display', 'none');
   }
     //Increment the idle time counter every minute.
-    var idleInterval = setInterval(timerIncrement, 60000); // 1 minute
-
+    let idleInterval = setInterval(timerIncrement, 60000); // 1 minute
+    // let idleInterval = setInterval(timerIncrement, 1000)
     //Zero the idle timer on mouse movement.
     $(this).mousemove(function (e) {
         idleTime = 0;
@@ -38,7 +38,7 @@ function check_reader() {
 setInterval(check_reader, 400);
 
 ipcRenderer.on('reader-reply', (event, data) => {
-  if (data == true) {
+  if (data > 0) {
     $('#reader_status').text('polling...');
   } else {
     $('#reader_status').text('not polling.');

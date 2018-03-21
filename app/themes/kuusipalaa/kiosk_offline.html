@@ -2,10 +2,12 @@
 <html lang="en">
   <head>
       <meta charset="UTF-8">
-      <title>Sound Machine</title>
+      <title>Search</title>
+
       <link href="css/index.css" rel="stylesheet" type="text/css"/>
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
-      <script src="js/shared.js"></script>
+    <script src="js/shared.js"></script>
+    <script src="js/offline.js"></script>
   </head>
   <body>
     <header>
@@ -22,28 +24,25 @@
     </header>
     <section class="flash" id="flash"></section>
     <section class="container">
-      <div class="left_info">
-        <h2 id="person_field"></h2>
-        <p id="user_id"></p>
-        <img src="" id="image_field" />
-                <div id="stakeholder">
-          STAKEHOLDER
-        </div>
-        <p>Latest balance:
-                <span id="latest_balance"></span>
-              </p>
-        <p>Last checked in:
-          <span id="last_checked_in"></span>
-        </p>
+      <h1>Kiosk offline</h1>
+      <h2>The kiosk cannot connect to the Kuusi Palaa API.</h2>
+      <p>Please check that the Ethernet cable is plugged into the wall and that the Internet connection at Kuusi Palaa is up and healthy.</p>
+      <p>The kiosk will retry connecting every 5 seconds.</p>
+      <div class="progress-bar">
+          <span class="progress-bar-fill" style="width: 0%"></span>
       </div>
-      <div class="right_info">
-        <h3>Press the button to check in:</h3>
-        <div id="events"></div>
+      <div class="quit_button">
+        <button id="quit_kiosk">Quit</button>
       </div>
     </section>
 
-    <script src="js/user_functions.js"></script>
+   <script type="text/javascript">
+        $('.progress-bar-fill').delay(10).queue(function () {
+                $(this).css('width', '100%')
+          });
 
+
+      </script>
   </body>
 
 </html>

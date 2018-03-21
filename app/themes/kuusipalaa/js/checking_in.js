@@ -1,5 +1,17 @@
 let mainMenu = document.querySelector('#main_menu');
 
+let returnTime = 0;
+let returnInterval = setInterval(userIncrement, 5000);
+
+function userIncrement() {
+    returnTime = returnTime + 1;
+    if (returnTime > 2) { // 20 minutes
+      ipcRenderer.send('main-screen');
+
+      // window.location.href = 'splash.html';
+    }
+}
+
 mainMenu.addEventListener('click', function() {
   ipcRenderer.send('main-screen');
 });
@@ -41,4 +53,7 @@ ipcRenderer.once('successful-checkin', (event, data) =>  {
   $('#events_count').text(data.events_attended);
   $('#checking_in').css('display', 'none');
   $('#checked_in').css('display', 'block');
+    if (data['is_stakeholder?'] == true) {
+    $('#stakeholder').css('display', 'block')
+  }
 });
