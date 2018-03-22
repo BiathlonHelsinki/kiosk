@@ -226,7 +226,6 @@ async function safe_to_write(callback) {
 	var a = false;
 	is_polling = true;
 	while (!a && is_polling == true) {
-    nfclock.lock('cardreader.lock')
 	  a = await check_for_card(device);
 		await sleep(400);
 	}
