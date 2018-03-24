@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <title>Sound Machine</title>
+      <link href="css/index.css" rel="stylesheet" type="text/css"/>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
+      <script src="js/shared.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="logo"><img src="img/temporary_logo.png"></div>
+      <div class="header_text">
+        <h1>Temporary</h1>
+      </div>
+      <div class="header_icons">
+        <div id='ct'></div>
+        <div>Reader status:
+          <span id="reader_status"></span>
+        </div>
+        <button id="main_menu">&larr;</button>
+      </div>
+    </header>
+    <section class="flash" id="flash"></section>
+    <section class="container">
+      <div class="left_info">
+        <h2 id="person_field"></h2>
+        <p id="user_id"></p>
+        <img src="" id="image_field" />
+        <p>Latest balance:
+                <span id="latest_balance"></span>
+              </p>
+        <p>Last checked in:
+          <span id="last_checked_in"></span>
+        </p>
+      </div>
+      <div class="right_info">
+        <h3>Choose an experiment to check in:</h3>
+        <div id="events"></div>
+      </div>
+    </section>
+
+    <script src="js/user_functions.js"></script>
+
+  </body>
+
+</html>

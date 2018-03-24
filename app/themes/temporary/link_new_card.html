@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <title>Search</title>
+      
+      <link href="css/index.css" rel="stylesheet" type="text/css"/>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.0/jquery.min.js" onload="window.$ = window.jQuery = module.exports;"></script>
+      <script src="js/shared.js"></script>
+  </head>
+  <body>
+    <header>
+      <div class="logo"><img src="img/temporary_logo.png"></div>
+      <div class="header_text">
+        <h1>Temporary</h1>
+      </div>
+      <div class="header_icons">
+        <div id='ct'></div>
+        <div>Reader status:
+          <span id="reader_status"></span>
+        </div>
+        <button id="main_menu">&larr;</button>
+      </div>
+    </header>
+    <section class="flash" id="flash"></section>
+    <section class="container">
+      <h2>Link new card</h2>
+    
+      <form id="search_for_users"  url="" method="get">
+        Type a part of name: <input type="text" id="text_search" autofocus name="searchterm"><br />
+        <br /><input type="submit" id="submit_search" value="Submit">
+      </form>
+
+     
+    </section>
+   
+     <script src="js/link_card.js"></script>
+  </body>
+  
+</html>

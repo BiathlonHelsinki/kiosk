@@ -1,0 +1,247 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0 0 0;
+  font-family: 'PT Sans', sans-serif;
+  background-color: #c9c9c9;
+  font-weight: normal;
+  overflow: hidden;
+}
+
+.button_row {
+  position: absolute;
+  bottom: 150px;
+}
+
+.quit_button {
+  position: absolute;
+  bottom: 40px;
+  right: 40px;
+}
+button, input[type=submit] {
+  font-family: 'Inconsolata', monospace;
+  font-size: 1.1rem;
+  padding: 0.6rem;
+  font-weight: bold;
+  background-color: #fded57;
+}
+header {
+  background-color: #fff200;
+  height: 90px;
+}
+
+header .logo {
+  float: left;
+  margin-top: 16px;
+}
+
+header .header_text {
+  float: left;
+  padding: 0;
+}
+header .header_text h1 {
+  padding-top: 10px;
+  font-family: "Inconsolata", monospace;
+}
+header .header_icons {
+  float: left;
+  padding: 2rem 1rem 0 0;
+  left: 71%;
+  position: absolute;
+}
+
+header .header_icons button {
+  position: absolute;
+  top: 28px;
+  right: -23px;
+}
+section.container {
+  padding: 0 2rem;
+  width: 100%;
+  float: left;
+}
+
+section#flash {
+  display: none;
+  font-size: 1.2rem;
+  padding: 0.4rem 0 0.4rem 2rem;
+  background-color: #FFF;
+}
+
+.search_box_left {
+  float: left;
+  width: 600px;
+}
+
+.link_button_right {
+  float: right;
+  clear: right;
+}
+
+select#results option {
+  font-size: 1.2rem;
+}
+
+select#results {
+  width: 600px;
+  height: 215px;
+  margin-bottom: 1rem;
+}
+
+#lower {
+  clear: both;
+}
+button#link_to_blank_card {
+  display: none;
+}
+
+.progress-bar {
+  margin-top: 15px;
+    width: calc(100% - 6px);
+    height: 5px;
+    background: #e0e0e0;
+    padding: 3px;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, .2);
+}
+
+.progress-bar-fill {
+    display: block;
+    height: 5px;
+    background: #fff200;
+    border-radius: 3px;
+    /*transition: width 250ms ease-in-out;*/
+    transition: width 5s ease-in-out;
+}
+
+section.container .left_info {
+  max-width: 40%;
+  float: left;
+  font-size: 0.8rem;
+}
+
+
+section.container .left_info img, section.container#checked_in .person_info img {
+  max-height: 200px;
+}
+
+section.container .right_info {
+  margin-top: 1rem;
+  width: 60%;
+  float: left;
+  text-align: center;
+}
+section.container .left_info p {
+  margin-bottom: 0.5rem;
+}
+
+section.container .left_info p#user_id {
+  display: none;
+}
+
+section.container .right_info #events button, section.container .guests#events button {
+  padding: 0.1rem;
+  margin-bottom: 1rem;
+  width: 350px;
+  font-family: 'PT Sans', serif;
+  font-size: 1.14rem;
+  font-weight: bold;
+}
+
+section.container .guests#events button  {
+  width: 250px;
+  float: left;
+  margin-right: 0.6rem;
+}
+
+section.container .right_info #events button.inactive, ssection.container .guests#events button .inactive {
+  background-color: #c9c9c9;
+}
+
+ {
+    
+}
+
+section.container .right_info #events button img, section.container .guests#events button img {
+  height: 60px;
+  float: left;
+}
+section.container .right_info #events button .title, section.container .guests#events button .title {
+  padding: 0.4rem 0 1rem 0;
+}
+section.container .right_info #events button .title .inactive, section.container .guests#events button .title .inactive {
+  font-weight: normal;
+  font-style: italic;
+  font-size: 0.8rem;
+  color: #666;
+}
+
+section.container .right_info #events button .temps, section.container .guests#events button .temps {
+  float: right;
+}
+section.container .right_info #events button .so_far, section.container .guests#events button .so_far {
+  float: left;
+  display: none;
+  padding-left: 0.3rem;
+  font-size: 0.75rem;
+}
+
+section.container#checking_in, section.container#printing_in_progress {
+  text-align: center;
+}
+
+section.container#errors, section.container#printed_ok {
+  display: none;
+  text-align: center;
+}
+
+section.container#checked_in, section.container#printed_ok {
+  display: none;
+}
+section.container#printed_ok .person_info button {
+  margin: 1rem;
+  font-size: 2.9rem;
+} 
+section.container#checked_in .person_info {
+  float: left;
+  widh: 48%;
+}
+
+section.container#checked_in .stats {
+  float: right;
+  width: 48%;
+}
+
+section.container#checked_in .stats div span {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+footer {
+  clear: both;
+  margin-top: 15px;
+  padding: 0.4rem 2rem;
+}
+
+#screensaver_div {
+  width: 800px;
+  height: 480px;
+  margin: 0;
+  overflow: hidden;
+}
+
+#screensaver_div .touchmessage {
+  height: 40px;
+  position: absolute;
+  top: 220px;
+  left: 0;
+  color: black;
+  text-align: center;
+  font-size: 1.7rem;
+  padding: 0.2rem 0;
+  width: 800px;
+  background-color: #fded57;
+  font-family: 'Inconsolata', sans-serif;
+}
