@@ -60,7 +60,7 @@ async function populate_node_address() {
 
 
 // unlock()
-connect_printer()
+// connect_printer()
 populate_node_address()
 
 
