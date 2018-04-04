@@ -13,7 +13,7 @@ ipcRenderer.on('load-events', (event, data) => {
     $('#events').append($('<button></button>').
       prop('id', data[i].attributes.slug).
       html(
-        $('<img>').attr({src: data[i].attributes.event_image.image.thumb.url.replace(/development/, 'production')})
+        $('<img>').attr({src: data[i].attributes.event_image.thumb.url.replace(/development/, 'production')})
         ).append($('<div></div>').attr({class: 'title'}).text(
         data[i].attributes.name))
         .append($('<div class="so_far"></div').text(data[i].attributes["checked_in_so_far"] + ' checked in today'))
