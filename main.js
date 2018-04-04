@@ -60,7 +60,7 @@ async function populate_node_address() {
 
 
 // unlock()
-// connect_printer()
+connect_printer()
 populate_node_address()
 
 
@@ -552,7 +552,7 @@ ipcMain.on('write-to-id', (event, id, pin) => {
         name = body.data.attributes.username;
         console.log('name is ' + name);
         mainWindow.loadURL(latest[0]);
-        image_url = body.data.attributes.avatar.avatar.small.url;
+        image_url = body.data.attributes.avatar.small.url;
         if (image_url == '/assets/transparent.gif') {
           image_url = config.missing_icon;
         }
@@ -749,7 +749,7 @@ ipcMain.on('send-to-blockchain',  function (event, data)  {
     async function(error, response, body) {
       if (!error && response.statusCode === 200) {
         console.log(util.inspect(body.data))
-        let image_url = body.data.attributes.avatar.avatar.small.url;
+        let image_url = body.data.attributes.avatar.small.url;
         if (image_url == '/assets/transparent.gif') {
           image_url = config.missing_icon;
         }
