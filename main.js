@@ -43,9 +43,11 @@ let token_address = null;
 
 function connect_printer() {
   try {
-    serialPort = new SerialPort('/dev/thermalprinter', {
-         baudrate: 9600
-    });
+    if (fs.existsSync('/dev/thermalprinter')) {
+      serialPort = new SerialPort('/dev/thermalprinter', {
+           baudrate: 9600
+      })
+    }
   } catch(err) {
     console.log('serialport error: ')
   }
@@ -99,17 +101,22 @@ function get_node_address() {
 async function initialise_reader() {
   try {
   	let devices = await freefare.listDevices();
-  	await devices[0].open();
-  	device = devices[0];
-  	console.log('got ' + device.name);
-      console.log('node address is ' + JSON.stringify(node_address))
-    console.log('token address is ' + JSON.stringify(token_address))
-  	is_polling = 1;
-  	await go();
+  	if (devices[0]) {
+      await devices[0].open();
+    	device = devices[0];
+    	console.log('got ' + device.name);
+        console.log('node address is ' + JSON.stringify(node_address))
+      console.log('token address is ' + JSON.stringify(token_address))
+    	is_polling = 1;
+    	await go();
+    }
   } catch (e) {
     console.log('got an error: ' + util.inspect(e))
-    initialise_reader()
+    if (devices[0]) {
+      initialise_reader()
+    }
   }
+
 }
 async function go() {
 
@@ -314,9 +321,9 @@ async function old_erase_card(reader, data) {
 
 async function write_card(reader, user_account, security_code) {
 
-    let tags = await reader.listTags();
+  let tags = await reader.listTags();
 
-	// if (tags[0]) {
+	if (tags[0] && node_address) {
     let tag_type = await tags[0].getType();
     // if (tag_type == 'MIFARE_ULTRALIGHT') {
 
@@ -328,8 +335,8 @@ async function write_card(reader, user_account, security_code) {
           json: true,
           headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}
           }, async(error, response, body) => {
-            console.log('body of ' + "http://" + config.api + ":" + config.port + "/users/" + user_account.id + "/get_eth_address :" + util.inspect(body))
-          if(!error && response.statusCode === 200) {
+
+          if(!error && response.statusCode === 200 && !body.address.status) {
             if (security_code != 'skip') {
               let write_security = await tags[0].write(4, new Buffer(hexToBytes(security_code)))
             }
@@ -353,6 +360,10 @@ async function write_card(reader, user_account, security_code) {
             resolve(tag_id.page0.toString('hex') + tag_id.page1.toString('hex') + tag_id.page2.toString('hex').replace(/0000$/, ''))
 
           }
+          else if (body.address.status) {
+            console.log(body.address.message)
+            resolve({"error": body.address.message})
+          }
           else {
 
             console.log('did not get eth address to write: ' + util.inspect(error))
@@ -360,6 +371,7 @@ async function write_card(reader, user_account, security_code) {
           }
         })
       })
+  }
 }
 
 
@@ -591,7 +603,14 @@ app.on('ready', function() {
     //  App startup here
     latest.ppush('file://' + __dirname + '/app/themes/' + config.theme + '/index.html');
 
-    setInterval(function() { biathlon.is_api_online(mainWindow) }, 5000);
+    setInterval(function() { biathlon.is_api_online(mainWindow, function() {
+
+      populate_node_address()
+      if (is_polling != 1) {
+        initialise_reader()
+      }
+
+    }) }, 5000);
     // setInterval(splash_screen, 30000);
     mainWindow.loadURL(latest.thearray[0]);
 
@@ -637,12 +656,17 @@ ipcMain.on('ready-to-upgrade', async function (event, id)  {
 
 				let a = { }
         a['id']= id
+
 				let write_operation = await write_card(device, a, 'skip');
 				latest = []
 				latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
 				mainWindow.loadURL(latest[0]);
 				mainWindow.webContents.once('did-finish-load', () => {
-					message = 'Your card has been upgraded to the new format.'
+          if (write_operation.error) {
+            message = write_operation.error + ' You cannot link a card right now; please try again later or contact info@kuusipalaa.fi.'
+          } else {
+  					message = 'Your card has been upgraded to the new format.'
+          }
 					mainWindow.webContents.send('present-flash', message);
 					message = null;
 				});
@@ -683,36 +707,48 @@ ipcMain.on('ready-to-write', async (event, id, pin) =>  {
 
               console.log(" SHOULD NOT HAPPEN UNTIL AFTER WRITE :: this uid is "  + util.inspect(uid) + ", security key is " + security_code)
 
+              if (!uid.error) {
+                request.post({url: write_url,
+                    form: {tag_address: uid, securekey: security_code },
+                    headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
+                    function (error, response, body) {
 
-              request.post({url: write_url,
-                  form: {tag_address: uid, securekey: security_code },
-                  headers: {"X-Hardware-Name": config.name, "X-Hardware-Token": config.token}},
-                  function (error, response, body) {
+                      if (!error && response.statusCode === 200) {
 
-                    if (!error && response.statusCode === 200) {
+                        latest = []
+                        latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+                        mainWindow.loadURL(latest[0]);
+                        mainWindow.webContents.once('did-finish-load', () => {
+                          message = 'Successfully created card #' + uid;
+                          mainWindow.webContents.send('present-flash', message);
+                          // return query_user(uid, security_code);
 
-                      latest = []
-                      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
-                      mainWindow.loadURL(latest[0]);
-                      mainWindow.webContents.once('did-finish-load', () => {
-                        message = 'Successfully created card #' + uid;
-                        mainWindow.webContents.send('present-flash', message);
-                        // return query_user(uid, security_code);
-
-                      });
-                    } else if (response.statusCode == 422) {
-                      latest = []
-                      latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
-                      mainWindow.loadURL(latest[0]);
-                      mainWindow.webContents.once('did-finish-load', () => {
-                        message = JSON.parse(body).error.message
-                        mainWindow.webContents.send('present-flash', message);
-                        message = null;
-                      });
-                    } else {
-                       console.log('error code is ' + response.statusCode);
-                     }
-              })
+                        });
+                      } else if (response.statusCode == 422) {
+                        latest = []
+                        latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+                        mainWindow.loadURL(latest[0]);
+                        mainWindow.webContents.once('did-finish-load', () => {
+                          message = JSON.parse(body).error.message
+                          mainWindow.webContents.send('present-flash', message);
+                          message = null;
+                        });
+                      } else {
+                         console.log('error code is ' + response.statusCode);
+                       }
+                })
+              } else {
+                latest = []
+                latest.push('file://' + __dirname + '/app/themes/' + config.theme + '/flash_screen.html');
+                mainWindow.loadURL(latest[0]);
+                mainWindow.webContents.once('did-finish-load', () => {
+                  message = uid.error + " You cannot link a card right now. Please try again later or contact info@kuusipalaa.fi for help."
+                  mainWindow.webContents.send('present-flash', message);
+                  setTimeout( () =>  {
+                    link_new_card_screen(mainWindow)
+                   }, 6000)
+                })
+              }
 			      } else {
               console.log("check me was not null")
               latest = []
@@ -834,11 +870,13 @@ ipcMain.on('open-card-services', async function erase_shit(){
 
 function print_paper_ticket(code, event) {
   // make this work later, for now just go shell
-  let printer = spawn("./write_guest_ticket.sh",  [code, event]);
-  var out = fs.createWriteStream("/dev/thermalprinter");
-  printer.stdout.on('data', function (chunk) {
-    out.write(chunk);
-  });
+
+    let printer = spawn("./write_guest_ticket.sh",  [code, event]);
+    var out = fs.createWriteStream("/dev/thermalprinter");
+    printer.stdout.on('data', function (chunk) {
+      out.write(chunk);
+    })
+
   // setTimeout(function() {
   //         console.log("Closing file...");
   //         fs.close(out, function(err) {

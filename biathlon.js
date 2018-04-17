@@ -5,7 +5,7 @@ var latest = require('./latest.js');
 const util = require('util')
 
 module.exports = {
-  is_api_online: function (mainWindow) {
+  is_api_online: function (mainWindow, callback) {
 
     tcpp.probe(config.api, config.port,  function(err, data) {
       if (data == true) {
@@ -14,7 +14,7 @@ module.exports = {
           latest.thearray.pop();
           if (latest.thearray[0] != undefined) {
             mainWindow.loadURL(latest.thearray[0]);
-
+            callback()
           }
         }
       } else {

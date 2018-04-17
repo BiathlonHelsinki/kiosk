@@ -1,4 +1,6 @@
-let {ipcRenderer} = require('electron');
+if (!ipcRenderer) {
+  let {ipcRenderer} = require('electron');
+}
 
 $(document).ready(function () {
   let closeEl = document.querySelector('#quit_kiosk');
