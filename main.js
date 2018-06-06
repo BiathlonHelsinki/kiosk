@@ -26,6 +26,9 @@ require('electron-debug')({showDevTools: false});
 const Freefare = require('freefare/index');
 let freefare = new Freefare();
 
+// const { exec } = require('child_process');
+// const git_version = exec(' git show HEAD | sed -n 1p  |cut -d " " -f 2 |colrm 8')
+// console.log('git version is  ' + git_version)
 
 const biathlon = require('./biathlon');
 

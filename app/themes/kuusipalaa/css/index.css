@@ -160,9 +160,13 @@ section.container .right_info #events button, section.container .guests#events b
 }
 
 section.container .guests#events button  {
-  width: 250px;
-  float: left;
-  margin-right: 0.6rem;
+  padding: 0.1rem;
+  margin-bottom: 1rem;
+  width: 350px;
+  height: 150px;
+  font-family: 'Source Code Pro', sans-serif;
+  font-size: 1.14rem;
+  font-weight: bold;
 }
 
 section.container .right_info #events button.inactive, ssection.container .guests#events button .inactive {
